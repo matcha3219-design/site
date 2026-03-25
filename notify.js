@@ -4,7 +4,7 @@
 const WORKER_URL = "https://broad-brook-c6dd.mattya3219.workers.dev";
 // ============================================================
 
-async function sendNotify() {
+(async function sendNotify() {
   const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
   const ua = navigator.userAgent;
 
@@ -42,4 +42,4 @@ async function sendNotify() {
   } catch (e) {
     console.error("通知エラー:", e.message);
   }
-}
+})();
