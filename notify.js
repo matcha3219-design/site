@@ -4,7 +4,7 @@
 const WORKER_URL = "https://broad-brook-c6dd.mattya3219.workers.dev";
 // ============================================================
 
-(async () => {
+async function sendNotify() {
   const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
   try {
     const res = await fetch(WORKER_URL, {
@@ -19,4 +19,4 @@ const WORKER_URL = "https://broad-brook-c6dd.mattya3219.workers.dev";
   } catch (e) {
     console.error("通知エラー:", e.message);
   }
-})();
+}
