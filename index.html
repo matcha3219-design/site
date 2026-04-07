@@ -262,6 +262,20 @@
     return qrRender.querySelector('canvas');
   }
 
+  // 白余白（quiet zone）付きcanvasを生成
+  function getCanvasWithMargin(margin = 32) {
+    const src = getCanvas();
+    if (!src) return null;
+    const c = document.createElement('canvas');
+    c.width  = src.width  + margin * 2;
+    c.height = src.height + margin * 2;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.drawImage(src, margin, margin);
+    return c;
+  }
+
   function generate() {
     clearError();
     const text = textInput.value.trim();
@@ -293,7 +307,7 @@
   });
 
   dlBtn.addEventListener('click', () => {
-    const canvas = getCanvas();
+    const canvas = getCanvasWithMargin();
     if (!canvas) return;
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/png');
@@ -302,7 +316,7 @@
   });
 
   copyBtn.addEventListener('click', async () => {
-    const canvas = getCanvas();
+    const canvas = getCanvasWithMargin();
     if (!canvas) return;
     try {
       canvas.toBlob(async blob => {
