@@ -134,20 +134,25 @@
   #canvas-wrap {
     background: #fff;
     border-radius: 10px;
-    overflow: hidden;
     box-shadow: 0 0 0 1px var(--border);
-    line-height: 0;
     padding: 16px;
     color-scheme: light;
   }
 
-  #canvas-wrap canvas,
-  #canvas-wrap img {
-    filter: none !important;
-    color-scheme: light;
+  /* スクランブル表示エリア */
+  #qr-stage {
+    position: relative;
+    overflow: visible;
   }
 
-  #qr-render { display: block; }
+  /* 非表示のcanvas（ピクセル読み取り専用） */
+  #qr-hidden { display: none; }
+
+  .module {
+    position: absolute;
+    background: #000;
+    will-change: transform, opacity;
+  }
 
   .meta {
     font-size: 0.8rem;
@@ -219,13 +224,12 @@
   </div>
 
   <div id="error" class="error"></div>
-
   <button class="generate-btn" id="gen-btn">生成</button>
 </div>
 
 <div class="output" id="output" style="display:none">
   <div id="canvas-wrap">
-    <div id="qr-render"></div>
+    <div id="qr-stage"></div>
   </div>
   <div class="meta" id="meta"></div>
   <div class="actions">
@@ -234,46 +238,123 @@
   </div>
 </div>
 
+<!-- ピクセル読み取り専用の隠しコンテナ -->
+<div id="qr-hidden"></div>
+
 <script>
   const textInput = document.getElementById('text-input');
   const ecSelect  = document.getElementById('ec-select');
   const sizeSelect= document.getElementById('size-select');
   const genBtn    = document.getElementById('gen-btn');
   const output    = document.getElementById('output');
-  const qrRender  = document.getElementById('qr-render');
+  const qrStage   = document.getElementById('qr-stage');
+  const qrHidden  = document.getElementById('qr-hidden');
   const meta      = document.getElementById('meta');
   const dlBtn     = document.getElementById('dl-btn');
   const copyBtn   = document.getElementById('copy-btn');
   const errorBox  = document.getElementById('error');
 
-  let qrInstance = null;
-
   const EC_MAP = { L: QRCode.CorrectLevel.L, M: QRCode.CorrectLevel.M, Q: QRCode.CorrectLevel.Q, H: QRCode.CorrectLevel.H };
 
-  function showError(msg) {
-    errorBox.textContent = msg;
-    errorBox.classList.add('show');
-  }
-  function clearError() {
-    errorBox.classList.remove('show');
+  // アニメーション設定
+  const ANIM_DURATION = 600;  // ms
+  const ANIM_STAGGER  = 1.2;  // モジュールごとの遅延係数（小さいほど速い）
+  const SCATTER_RANGE = 1.5;  // 飛び散り範囲（倍率）
+
+  let snapshotCanvas = null; // ダウンロード用
+
+  function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('show'); }
+  function clearError()   { errorBox.classList.remove('show'); }
+
+  // qrcodejsのcanvasからモジュール情報を抽出
+  function extractModules(canvas, size) {
+    const ctx = canvas.getContext('2d');
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = img.data;
+    const cw = canvas.width;
+
+    // モジュール数を推定（連続する同色ピクセル幅から）
+    // 左上から右に走査して最初の色変化を探す
+    let moduleSize = 1;
+    const firstPixel = data[0] < 128; // true=dark
+    for (let x = 1; x < cw; x++) {
+      const isDark = data[x * 4] < 128;
+      if (isDark !== firstPixel) { moduleSize = x; break; }
+    }
+    if (moduleSize < 1) moduleSize = Math.round(cw / size);
+
+    const count = Math.round(cw / moduleSize);
+    const modules = [];
+
+    for (let row = 0; row < count; row++) {
+      for (let col = 0; col < count; col++) {
+        const px = Math.floor(col * moduleSize + moduleSize / 2);
+        const py = Math.floor(row * moduleSize + moduleSize / 2);
+        const idx = (py * cw + px) * 4;
+        const isDark = data[idx] < 128;
+        if (isDark) modules.push({ row, col });
+      }
+    }
+    return { modules, count, moduleSize: Math.floor(size / count) };
   }
 
-  function getCanvas() {
-    return qrRender.querySelector('canvas');
+  function runScrambleAnimation(modules, count, modPx, totalSize) {
+    qrStage.innerHTML = '';
+    qrStage.style.width  = totalSize + 'px';
+    qrStage.style.height = totalSize + 'px';
+
+    // シャッフルして描画順をランダムに
+    const shuffled = [...modules].sort(() => Math.random() - 0.5);
+
+    shuffled.forEach((m, i) => {
+      const el = document.createElement('div');
+      el.className = 'module';
+      el.style.width  = modPx + 'px';
+      el.style.height = modPx + 'px';
+
+      // 最終位置
+      const tx = m.col * modPx;
+      const ty = m.row * modPx;
+
+      // 初期位置：ランダムに散らばった位置
+      const rx = (Math.random() - 0.5) * totalSize * SCATTER_RANGE * 2;
+      const ry = (Math.random() - 0.5) * totalSize * SCATTER_RANGE * 2;
+
+      // 初期状態をセット
+      el.style.transform = `translate(${tx + rx}px, ${ty + ry}px)`;
+      el.style.opacity   = '0';
+
+      qrStage.appendChild(el);
+
+      // 少し待ってからアニメーション開始
+      const delay = i * ANIM_STAGGER;
+
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          el.style.transition = `transform ${ANIM_DURATION}ms cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 150ms ease`;
+          el.style.transform  = `translate(${tx}px, ${ty}px)`;
+          el.style.opacity    = '1';
+        }, delay);
+      });
+    });
   }
 
-  // 白余白（quiet zone）付きcanvasを生成
-  function getCanvasWithMargin(margin = 32) {
-    const src = getCanvas();
-    if (!src) return null;
-    const c = document.createElement('canvas');
-    c.width  = src.width  + margin * 2;
-    c.height = src.height + margin * 2;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.drawImage(src, margin, margin);
-    return c;
+  // アニメーション完了後にcanvasスナップショットを撮る
+  function scheduleSnapshot(totalSize, modules, modPx) {
+    const maxDelay = modules.length * ANIM_STAGGER + ANIM_DURATION + 100;
+    setTimeout(() => {
+      const c = document.createElement('canvas');
+      const margin = 32;
+      c.width = c.height = totalSize + margin * 2;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.fillStyle = '#000000';
+      modules.forEach(m => {
+        ctx.fillRect(margin + m.col * modPx, margin + m.row * modPx, modPx, modPx);
+      });
+      snapshotCanvas = c;
+    }, maxDelay);
   }
 
   function generate() {
@@ -284,21 +365,31 @@
     const size = parseInt(sizeSelect.value, 10);
     const ec   = EC_MAP[ecSelect.value];
 
-    // 再生成のため中身をクリア
-    qrRender.innerHTML = '';
+    snapshotCanvas = null;
+    qrHidden.innerHTML = '';
 
+    // 隠しcanvasでQR生成（ピクセル読み取り用）
     try {
-      qrInstance = new QRCode(qrRender, {
-        text,
-        width: size,
-        height: size,
-        correctLevel: ec,
-      });
-      meta.textContent = `EC: ${ecSelect.value}  ·  ${size}×${size}px`;
-      output.style.display = 'flex';
+      new QRCode(qrHidden, { text, width: size, height: size, correctLevel: ec });
     } catch (e) {
       showError('QRコードの生成に失敗しました: ' + e.message);
+      return;
     }
+
+    // canvasが生成されるまで少し待つ
+    setTimeout(() => {
+      const canvas = qrHidden.querySelector('canvas');
+      if (!canvas) { showError('QRの読み取りに失敗しました'); return; }
+
+      const { modules, count, moduleSize: modPx } = extractModules(canvas, size);
+      const totalSize = count * modPx;
+
+      meta.textContent = `EC: ${ecSelect.value}  ·  ${count}×${count} モジュール`;
+      output.style.display = 'flex';
+
+      runScrambleAnimation(modules, count, modPx, totalSize);
+      scheduleSnapshot(totalSize, modules, modPx);
+    }, 50);
   }
 
   genBtn.addEventListener('click', generate);
@@ -306,20 +397,22 @@
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(); }
   });
 
-  dlBtn.addEventListener('click', () => {
-    const canvas = getCanvasWithMargin();
-    if (!canvas) return;
+  function downloadCanvas(canvas) {
     const a = document.createElement('a');
     a.href = canvas.toDataURL('image/png');
     a.download = 'qrcode.png';
     a.click();
+  }
+
+  dlBtn.addEventListener('click', () => {
+    if (!snapshotCanvas) { showError('生成完了後にダウンロードしてください'); return; }
+    downloadCanvas(snapshotCanvas);
   });
 
   copyBtn.addEventListener('click', async () => {
-    const canvas = getCanvasWithMargin();
-    if (!canvas) return;
+    if (!snapshotCanvas) { showError('生成完了後にコピーしてください'); return; }
     try {
-      canvas.toBlob(async blob => {
+      snapshotCanvas.toBlob(async blob => {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
         const prev = copyBtn.textContent;
         copyBtn.textContent = '✓ コピー完了';
