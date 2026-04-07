@@ -2,765 +2,301 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>セキュアログインシステム v∞</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code Generator</title>
 <style>
-/* ===== リセット & ベース ===== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg:      #080810;
-  --card:    #0e0e1c;
-  --card-b:  #1c1c38;
-  --txt:     #b0b0cc;
-  --dim:     #555580;
-  --in-bg:   #090915;
-  --in-b:    #22223a;
-  --accent:  #4455ee;
-  --danger:  #cc3355;
-  --green:   #22aa66;
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #e8ff00;
+    --text: #f0f0f0;
+    --muted: #888;
+    --radius: 12px;
+  }
 
-  /* 動的スケール変数（JS で書き換え） */
-  --scale: 1;
-  --fs-base:  clamp(11px, 3.2vw, 14px);
-  --fs-sm:    clamp(9px,  2.5vw, 11px);
-  --fs-h1:    clamp(17px, 5vw,   22px);
-  --fs-cap:   clamp(15px, 4.5vw, 19px);
-  --pad-card: clamp(16px, 4vw,   34px);
-  --r:        clamp(8px,  2vw,   14px);
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    gap: 2rem;
+  }
 
-html, body {
-  height: 100%;
-  /* モバイルブラウザの動的viewport対応 */
-  min-height: 100dvh;
-}
+  h1 {
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--accent); }
 
-body {
-  background: var(--bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Segoe UI", sans-serif;
-  overflow: hidden;
-  color: var(--txt);
-  font-size: var(--fs-base);
-}
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 480px;
+  }
 
-body::before {
-  content: "";
-  position: fixed; inset: 0;
-  background-image:
-    radial-gradient(ellipse 60% 40% at 20% 30%, #1a1050 0%, transparent 60%),
-    radial-gradient(ellipse 50% 60% at 80% 70%, #0a1535 0%, transparent 60%);
-  pointer-events: none;
-}
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
 
-/* ===== カード ===== */
-.card {
-  background: var(--card);
-  border: 1px solid var(--card-b);
-  border-radius: var(--r);
-  padding: var(--pad-card);
-  width: min(430px, calc(100vw - 20px));
-  /* 画面高さに収まるようスクロール可能に */
-  max-height: calc(100dvh - 70px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-shadow: 0 0 60px rgba(40,40,120,0.4), 0 0 0 1px #ffffff08;
-  position: relative;
-  z-index: 1;
-  /* スクロールバー非表示（見た目） */
-  scrollbar-width: none;
-}
-.card::-webkit-scrollbar { display: none; }
+  label {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
 
-/* ===== タイトル ===== */
-@keyframes titleWobble {
-  0%,100% { transform: translateX(0) rotate(0deg); }
-  20%     { transform: translateX(-3px) rotate(-0.5deg); }
-  40%     { transform: translateX(4px) rotate(0.8deg); }
-  60%     { transform: translateX(-2px) rotate(-0.3deg); }
-  80%     { transform: translateX(3px) rotate(0.5deg); }
-}
-h1 {
-  text-align: center;
-  color: #8899ff;
-  font-size: var(--fs-h1);
-  margin-bottom: 4px;
-  animation: titleWobble 3.5s ease-in-out infinite;
-  display: inline-block;
-  width: 100%;
-}
+  textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+    padding: 0.75rem 1rem;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  textarea:focus { border-color: var(--accent); }
 
-/* ===== マーキー ===== */
-.marquee-wrap {
-  overflow: hidden;
-  white-space: nowrap;
-  margin-bottom: clamp(8px, 2vw, 14px);
-  background: #1a0010;
-  border-radius: 4px;
-  padding: 3px 0;
-}
-@keyframes marquee { from { transform: translateX(100%); } to { transform: translateX(-160%); } }
-.marquee-inner {
-  display: inline-block;
-  animation: marquee 12s linear infinite;
-  font-size: var(--fs-sm);
-  color: var(--danger);
-  font-weight: bold;
-}
+  .options {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
 
-/* ===== ラベル ===== */
-@keyframes labelFloat {
-  0%,100% { transform: translateY(0); }
-  50%     { transform: translateY(-2px); }
-}
-label {
-  display: block;
-  font-size: var(--fs-sm);
-  margin-top: clamp(8px, 2.5vw, 12px);
-  margin-bottom: 4px;
-  color: var(--dim);
-  animation: labelFloat 2s ease-in-out infinite;
-}
-label:nth-of-type(2) { animation-delay: 0.3s; }
-label:nth-of-type(3) { animation-delay: 0.7s; }
-label:nth-of-type(4) { animation-delay: 1.1s; }
-label:nth-of-type(5) { animation-delay: 0.5s; }
+  .option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
 
-/* ===== インプット ===== */
-.input-row { display: flex; gap: 6px; }
+  select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+  }
+  select:focus { border-color: var(--accent); }
 
-input[type="text"],
-input[type="password"] {
-  width: 100%;
-  padding: clamp(7px, 2vw, 9px) 10px;
-  background: var(--in-bg);
-  border: 1.5px solid var(--in-b);
-  border-radius: clamp(5px, 1.5vw, 7px);
-  font-size: var(--fs-base);
-  color: var(--txt);
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  /* モバイルでズームしない */
-  font-size: max(16px, var(--fs-base));
-}
-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px #4455ee22;
-}
-input:disabled { opacity: 0.4; cursor: not-allowed; }
-input::placeholder { color: var(--dim); font-size: var(--fs-sm); }
+  .generate-btn {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+  .generate-btn:hover  { opacity: 0.85; }
+  .generate-btn:active { transform: scale(0.98); }
 
-.eye-btn {
-  padding: 0 clamp(8px, 2.5vw, 12px);
-  border: 1.5px solid var(--in-b);
-  border-radius: clamp(5px, 1.5vw, 7px);
-  background: var(--in-bg);
-  color: var(--txt);
-  cursor: pointer;
-  font-size: clamp(14px, 4vw, 17px);
-  flex-shrink: 0;
-  min-width: 44px; /* タップしやすいサイズ */
-  transition: border-color 0.2s;
-}
+  .output {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
 
-/* ===== 強度バー ===== */
-.strength-wrap { margin-top: 5px; }
-.strength-bar {
-  height: 5px;
-  background: #1a1a2a;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.strength-fill {
-  height: 100%;
-  width: 4%;
-  background: var(--danger);
-  transition: width 0.2s;
-}
-.strength-label { font-size: var(--fs-sm); color: var(--danger); margin-top: 2px; }
+  #canvas-wrap {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--border);
+    line-height: 0;
+    transition: opacity 0.2s;
+  }
+  #canvas-wrap.hidden { opacity: 0; }
 
-/* ===== 要件 ===== */
-.requirements {
-  background: #1a0a10;
-  border: 1px solid #440020;
-  border-radius: clamp(5px, 1.5vw, 7px);
-  padding: clamp(6px, 2vw, 10px) clamp(8px, 2.5vw, 12px);
-  margin-top: clamp(6px, 2vw, 10px);
-  font-size: var(--fs-sm);
-}
-.requirements p { font-weight: bold; margin-bottom: 4px; color: var(--danger); }
-.requirements ul { padding-left: 14px; }
-@keyframes reqWiggle {
-  0%,100% { transform: translateX(0); }
-  25%     { transform: translateX(2px); }
-  75%     { transform: translateX(-2px); }
-}
-.requirements li {
-  margin-bottom: 3px;
-  color: #cc5577;
-  animation: reqWiggle 1.8s ease-in-out infinite;
-}
-.requirements li:nth-child(2) { animation-delay: 0.3s; }
-.requirements li:nth-child(3) { animation-delay: 0.6s; }
-.requirements li:nth-child(4) { animation-delay: 0.9s; }
+  canvas { display: block; max-width: min(300px, 80vw); height: auto; }
 
-/* ===== キャプチャ ===== */
-.captcha-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: clamp(6px, 2vw, 10px);
-  background: #0a0a20;
-  border: 1.5px solid var(--in-b);
-  border-radius: clamp(5px, 1.5vw, 7px);
-  padding: clamp(5px, 1.5vw, 8px) 10px;
-}
-@keyframes captchaDistort {
-  0%,100% { letter-spacing: clamp(2px,1vw,4px); transform: skewX(0deg); }
-  30%     { letter-spacing: clamp(3px,1.5vw,5px); transform: skewX(-2deg); }
-  70%     { letter-spacing: clamp(1px,0.8vw,3px); transform: skewX(1.5deg); }
-}
-.captcha-text {
-  font-family: "Courier New", monospace;
-  font-size: var(--fs-cap);
-  font-weight: bold;
-  color: #6688ff;
-  text-decoration: line-through wavy #334;
-  filter: blur(0.5px);
-  user-select: none;
-  flex: 1;
-  animation: captchaDistort 2.5s ease-in-out infinite;
-}
-.refresh-btn {
-  background: none;
-  border: none;
-  font-size: clamp(16px, 4.5vw, 20px);
-  cursor: pointer;
-  opacity: 0.7;
-  min-width: 44px;
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .meta {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: center;
+  }
 
-/* ===== ステータス ===== */
-.status-msg {
-  font-size: var(--fs-sm);
-  color: var(--danger);
-  min-height: 16px;
-  text-align: center;
-  margin-top: 6px;
-}
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+  }
 
-/* ===== ログインボタン ===== */
-#loginBtn {
-  position: fixed;
-  padding: clamp(10px, 3vw, 13px) clamp(20px, 6vw, 32px);
-  background: linear-gradient(135deg, #3344cc, #5566ff);
-  color: #fff;
-  border: none;
-  border-radius: clamp(6px, 2vw, 10px);
-  font-size: clamp(13px, 3.8vw, 15px);
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 9999;
-  box-shadow: 0 4px 20px #3344cc66;
-  min-width: 44px;
-  min-height: 44px;
-  white-space: nowrap;
-  transition: left   0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              top    0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              bottom 0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              right  0.2s cubic-bezier(0.22, 1, 0.36, 1),
-              background 0.2s;
-}
-@keyframes btnPulse {
-  0%,100% { box-shadow: 0 4px 20px #3344cc66; }
-  50%     { box-shadow: 0 4px 30px #5566ffaa; }
-}
-#loginBtn { animation: btnPulse 2s ease-in-out infinite; }
+  .icon-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .icon-btn:hover { border-color: var(--accent); background: #222; }
 
-/* ===== 浮遊テキスト ===== */
-.floater {
-  position: fixed;
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 0;
-  animation: floatUp linear infinite;
-}
-@keyframes floatUp {
-  from { transform: translateY(100vh) rotate(-5deg); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  to   { transform: translateY(-120px) rotate(5deg); opacity: 0; }
-}
-
-/* ===== カウンター ===== */
-#tryCounter {
-  position: fixed;
-  top: 8px;
-  right: 10px;
-  font-size: clamp(9px, 2.5vw, 11px);
-  color: var(--dim);
-  z-index: 100;
-  text-align: right;
-  line-height: 1.6;
-  pointer-events: none;
-}
-
-/* ===== モーダル ===== */
-.modal-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(4px);
-  z-index: 10000;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-.modal-overlay.show { display: flex; }
-.modal {
-  background: #0e0e1c;
-  border: 1px solid #cc335544;
-  border-radius: clamp(8px, 3vw, 12px);
-  padding: clamp(18px, 5vw, 28px) clamp(16px, 5vw, 32px);
-  width: min(360px, 100%);
-  text-align: center;
-  box-shadow: 0 0 40px #cc335533;
-  animation: modalShake 0.3s ease;
-}
-@keyframes modalShake {
-  0%,100% { transform: translateX(0); }
-  20%     { transform: translateX(-8px); }
-  40%     { transform: translateX(8px); }
-  60%     { transform: translateX(-5px); }
-  80%     { transform: translateX(5px); }
-}
-.modal h2 { color: var(--danger); margin-bottom: 10px; font-size: clamp(14px, 4.5vw, 17px); }
-.modal p  { color: var(--txt); font-size: clamp(11px, 3.5vw, 13px); margin-bottom: 14px; line-height: 1.7; }
-.modal button {
-  padding: clamp(8px,2.5vw,10px) clamp(18px,5vw,24px);
-  background: #cc3355;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: clamp(12px, 3.5vw, 14px);
-  min-width: 44px;
-  min-height: 44px;
-}
-
-/* ===== 成功モーダル ===== */
-#successModal .modal { border-color: #22aa6644; box-shadow: 0 0 40px #22aa6633; }
-#successModal .modal h2 { color: var(--green); }
-.progress-wrap {
-  background: #0a1a10;
-  border-radius: 4px;
-  height: 10px;
-  overflow: hidden;
-  margin: 10px 0 12px;
-}
-.progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #22aa66, #44ffaa);
-}
+  .error {
+    color: #ff6b6b;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: 6px;
+    display: none;
+  }
+  .error.show { display: block; }
 </style>
 </head>
 <body>
 
-<div id="floaters"></div>
+<h1>QR Code <span>Generator</span></h1>
 
-<div id="tryCounter">
-  試行: <span id="cntNum">0</span><br>
-  <span id="cntComment" style="color:#cc3355;">がんばれ（無駄）</span>
+<div class="card">
+  <div class="input-group">
+    <label for="text-input">テキスト / URL</label>
+    <textarea id="text-input" placeholder="https://example.com" spellcheck="false"></textarea>
+  </div>
+
+  <div class="options">
+    <div class="option-group">
+      <label for="ec-select">誤り訂正</label>
+      <select id="ec-select">
+        <option value="L">L — 低 (7%)</option>
+        <option value="M" selected>M — 中 (15%)</option>
+        <option value="Q">Q — 四 (25%)</option>
+        <option value="H">H — 高 (30%)</option>
+      </select>
+    </div>
+    <div class="option-group">
+      <label for="size-select">モジュールサイズ</label>
+      <select id="size-select">
+        <option value="6">小 (6px)</option>
+        <option value="8">中 (8px)</option>
+        <option value="10" selected>標準 (10px)</option>
+        <option value="14">大 (14px)</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="error" class="error"></div>
+
+  <button class="generate-btn" id="gen-btn">生成</button>
 </div>
 
-<div class="card" id="card">
-  <h1>ログイン</h1>
-
-  <div class="marquee-wrap">
-    <span class="marquee-inner" id="marqueeText">
-      ⚠ このサイトは安全です ⚠ &nbsp;&nbsp;&nbsp;
-      セキュリティレベル: 銀河最高 &nbsp;&nbsp;&nbsp;
-      あなたのパスワードは既に漏洩しています &nbsp;&nbsp;&nbsp;
-      ご安心ください（嘘） &nbsp;&nbsp;&nbsp;
-    </span>
+<div class="output" id="output" style="display:none">
+  <div id="canvas-wrap">
+    <canvas id="qr-canvas"></canvas>
   </div>
-
-  <label>ユーザー名:</label>
-  <input type="text" value="admin" disabled>
-
-  <label id="lbl2">パスワード:</label>
-  <div class="input-row">
-    <input type="password" id="pwInput" placeholder="パスワードを入力（意味なし）" autocomplete="off">
-    <button class="eye-btn" id="eyeBtn">👁</button>
-  </div>
-
-  <div class="strength-wrap">
-    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-    <div class="strength-label" id="strengthLabel">論外</div>
-  </div>
-
-  <div class="requirements">
-    <p>⚠ パスワード要件（毎回変わります）:</p>
-    <ul id="reqList"></ul>
-  </div>
-
-  <label>キャプチャ (<span id="captchaNum">1</span>/∞):</label>
-  <div class="captcha-box">
-    <span class="captcha-text" id="captchaText"></span>
-    <button class="refresh-btn" id="refreshCaptcha">🔄</button>
-  </div>
-  <label id="lbl4">上の文字を正確に入力:</label>
-  <input type="text" id="captchaInput" placeholder="ここに入力（どうせリセット）" autocomplete="off">
-
-  <div class="status-msg" id="statusMsg"></div>
-</div>
-
-<button id="loginBtn">ログイン</button>
-
-<!-- エラーモーダル -->
-<div class="modal-overlay" id="errorModal">
-  <div class="modal">
-    <h2 id="errorTitle">エラー</h2>
-    <p id="errorMsg"></p>
-    <button onclick="closeError()">OK（諦めないで）</button>
+  <div class="meta" id="meta"></div>
+  <div class="actions">
+    <button class="icon-btn" id="dl-btn">⬇ PNG 保存</button>
+    <button class="icon-btn" id="copy-btn">⎘ クリップボードにコピー</button>
   </div>
 </div>
 
-<!-- 成功モーダル -->
-<div class="modal-overlay" id="successModal">
-  <div class="modal">
-    <h2>ログイン成功！</h2>
-    <p>アクセスを確認中...<br><small style="color:#557755">しばらくお待ちください</small></p>
-    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
-    <p id="successSub" style="font-size:11px;color:#446644;"></p>
-  </div>
-</div>
+<script type="module">
+import { renderToCanvas } from './qr.js';
 
-<script>
-// ===== データ =====
-const ANNOYING_MESSAGES = [
-  "パスワードが違います！（合ってても違います）",
-  "もう一度やり直してください（永遠に）",
-  "ヒント：正解はありません",
-  "大文字？小文字？全部？知らんw",
-  "セキュリティのため、正解でも弾きます",
-  "エラー: パスワードが正しすぎます",
-  "パスワードの有効期限が切れました（入力前に）",
-  "半角・全角・斜め角を確認してください",
-  "このブラウザは非対応です（何を使っても同じ）",
-  "パスワードに宇宙のエネルギーが足りません",
-  "認証サーバーが拒否しました（気分で）",
-  "アカウントが一時ロックされました（永久に）",
-  "パスワードに愛が足りません 💔",
-];
+const textInput = document.getElementById('text-input');
+const ecSelect  = document.getElementById('ec-select');
+const sizeSelect= document.getElementById('size-select');
+const genBtn    = document.getElementById('gen-btn');
+const output    = document.getElementById('output');
+const canvasWrap= document.getElementById('canvas-wrap');
+const canvas    = document.getElementById('qr-canvas');
+const meta      = document.getElementById('meta');
+const dlBtn     = document.getElementById('dl-btn');
+const copyBtn   = document.getElementById('copy-btn');
+const errorBox  = document.getElementById('error');
 
-const REQUIREMENTS = [
-  ["大文字を含む", "小文字を含む", "数字を含む", "記号を含む", "絵文字を含む 🔥"],
-  ["8文字以上", "100文字以下", "文字数が素数であること"],
-  ["あなたの誕生日を含む", "でも個人情報は使わないで"],
-  ["過去10000回のパスワードと異なること"],
-  ["スペースを含む", "でもスペースは使用禁止"],
-  ["回文であること（前後から読んで同じ）"],
-  ["月曜日の午前3時のみ有効"],
-  ["「password」を含めないでください", "でも「password」は必須です"],
-  ["母音で始まる必要があります", "でも母音は使用禁止"],
-  ["隣接キーを2回以上使わない", "でも全てのキーを使う"],
-];
-
-const TITLES = [
-  "セキュアログインシステム v∞",
-  "ログイン... しないでください",
-  "認証中... (∞%)",
-  "エラー 404: やる気が見つかりません",
-  "セキュリティレベル: 銀河最高",
-  "ログイン試行: 無駄です",
-  "あなたのデータは安全です（嘘）",
-  "接続中... (0.0001%)",
-];
-
-const CNT_COMMENTS = [
-  "がんばれ（無駄）","もう少し（嘘）","あきらめないで（でも無理）",
-  "惜しい！（全然惜しくない）","記録更新中...","そろそろ疲れた？",
-  "人類の限界に挑戦中","なぜ続けるの？","哲学的な問いですね",
-];
-
-const STRENGTH_LABELS = ["論外","最弱","弱すぎ","弱い","まだ弱い","論外（再）"];
-const CAPTCHA_CHARS = "0OIl1ABCDEFGHJKLMNPQRSTUVWXabcdefghijkmnpqrstuvwxyz23456789";
-const FLOAT_WORDS = [
-  "ERROR","404","ACCESS DENIED","INVALID","RETRY","TIMEOUT",
-  "FORBIDDEN","LOCKED","REJECTED","FAILED","??????","NULL",
-  "パスワードが違います","再試行","エラー","拒否","無効",
-];
-const MARQUEE_MSGS = [
-  "⚠ このサイトは安全です ⚠ &nbsp;&nbsp; セキュリティレベル: 銀河最高 &nbsp;&nbsp; あなたのパスワードは既に漏洩しています &nbsp;&nbsp; ご安心ください（嘘） &nbsp;&nbsp;",
-  "🔒 認証中... &nbsp;&nbsp; エラー #∞ &nbsp;&nbsp; パスワードを正しく入力してください（無理） &nbsp;&nbsp; サポート: 対応しておりません &nbsp;&nbsp;",
-  "🚨 不審なアクセスを検知しました（あなたのことです） &nbsp;&nbsp; 直ちにパスワードを変更してください（できません） &nbsp;&nbsp;",
-];
-const PW_PLACEHOLDERS = [
-  "パスワードを入力（意味なし）",
-  "ここに入力（どうせ失敗）",
-  "強いパスワード？無意味です",
-  "あなたのパスワードは既に知っています",
-  "••••••（でも見ています）",
-];
-const SCRAMBLE_CHARS = "アイウエオカキクケコ#@!?%&*ABCDEFGabcdefg01234";
-
-// ===== 状態 =====
-let attemptCount = 0, captchaAnswer = "", captchaCount = 1, btnEscaping = false;
-
-// ===== 要素 =====
-const pwInput      = document.getElementById("pwInput");
-const strengthFill = document.getElementById("strengthFill");
-const strengthLabel= document.getElementById("strengthLabel");
-const reqList      = document.getElementById("reqList");
-const captchaText  = document.getElementById("captchaText");
-const captchaInput = document.getElementById("captchaInput");
-const loginBtn     = document.getElementById("loginBtn");
-const statusMsg    = document.getElementById("statusMsg");
-const errorModal   = document.getElementById("errorModal");
-const successModal = document.getElementById("successModal");
-const cntNum       = document.getElementById("cntNum");
-const cntComment   = document.getElementById("cntComment");
-const captchaNum   = document.getElementById("captchaNum");
-
-// ===== ボタン安全領域（動的計算） =====
-function getBtnBounds() {
-  const bw = loginBtn.offsetWidth  || 100;
-  const bh = loginBtn.offsetHeight || 44;
-  return {
-    maxX: Math.max(10, window.innerWidth  - bw - 10),
-    maxY: Math.max(10, window.innerHeight - bh - 10),
-  };
+function showError(msg) {
+  errorBox.textContent = msg;
+  errorBox.classList.add('show');
+}
+function clearError() {
+  errorBox.classList.remove('show');
 }
 
-function setBtnPos(x, y) {
-  const { maxX, maxY } = getBtnBounds();
-  loginBtn.style.left = Math.max(10, Math.min(maxX, x)) + "px";
-  loginBtn.style.top  = Math.max(10, Math.min(maxY, y)) + "px";
+function generate() {
+  clearError();
+  const text = textInput.value.trim();
+  if (!text) { showError('テキストを入力してください'); return; }
+
+  try {
+    const qr = renderToCanvas(canvas, text, {
+      ecLevel: ecSelect.value,
+      moduleSize: parseInt(sizeSelect.value, 10),
+      margin: 4,
+    });
+    meta.textContent = `バージョン ${qr.version}  ·  ${qr.size}×${qr.size} モジュール  ·  EC: ${ecSelect.value}`;
+    output.style.display = 'flex';
+    canvasWrap.classList.remove('hidden');
+  } catch (e) {
+    showError(e.message);
+  }
 }
 
-// 初期位置（画面下中央）
-function initBtnPos() {
-  const { maxX, maxY } = getBtnBounds();
-  setBtnPos(maxX / 2, maxY - 10);
-}
-initBtnPos();
-window.addEventListener("resize", () => {
-  initBtnPos();
+genBtn.addEventListener('click', generate);
+textInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(); }
 });
 
-// ===== ボタンが逃げる =====
-function runAway(mx, my) {
-  if (btnEscaping) return;
-  btnEscaping = true;
-
-  const { maxX, maxY } = getBtnBounds();
-  const bw = loginBtn.offsetWidth;
-  const bh = loginBtn.offsetHeight;
-  const bx = parseFloat(loginBtn.style.left) + bw / 2;
-  const by = parseFloat(loginBtn.style.top)  + bh / 2;
-
-  // マウス/タッチ位置から逃げる方向を計算
-  const dx = bx - (mx ?? bx + 1);
-  const dy = by - (my ?? by + 1);
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const range = Math.min(0.35 + attemptCount * 0.055, 0.9);
-  const dist  = (Math.min(maxX, maxY) * 0.3 + Math.random() * Math.min(maxX, maxY) * range);
-
-  let nx = bx + (dx / len) * dist + (Math.random() - 0.5) * 60;
-  let ny = by + (dy / len) * dist + (Math.random() - 0.5) * 60;
-
-  setBtnPos(nx - bw / 2, ny - bh / 2);
-  setTimeout(() => { btnEscaping = false; }, 230);
-}
-
-loginBtn.addEventListener("mouseenter", e => runAway(e.clientX, e.clientY));
-loginBtn.addEventListener("touchstart", e => {
-  e.preventDefault();
-  const t = e.touches[0];
-  runAway(t.clientX, t.clientY);
-}, { passive: false });
-
-// ===== ログイン試行 =====
-loginBtn.addEventListener("click",     tryLogin);
-loginBtn.addEventListener("touchend",  e => { e.preventDefault(); tryLogin(); });
-
-function tryLogin() {
-  attemptCount++;
-  cntNum.textContent     = attemptCount;
-  cntComment.textContent = CNT_COMMENTS[Math.min(attemptCount - 1, CNT_COMMENTS.length - 1)];
-  shakeCard();
-  refreshCaptcha();
-  updateRequirements();
-
-  const msg = ANNOYING_MESSAGES[Math.floor(Math.random() * ANNOYING_MESSAGES.length)];
-  setTimeout(() => showError(`エラー #${attemptCount}`, msg), 350);
-
-  if (attemptCount >= 10 && attemptCount % 10 === 0) setTimeout(fakeSuccess, 1000);
-}
-
-// ===== キャプチャ =====
-function refreshCaptcha() {
-  let s = "";
-  for (let i = 0; i < 8; i++) s += CAPTCHA_CHARS[Math.floor(Math.random() * CAPTCHA_CHARS.length)];
-  captchaAnswer = s;
-  captchaText.textContent = s;
-  captchaInput.value = "";
-  captchaNum.textContent = captchaCount++;
-}
-document.getElementById("refreshCaptcha").addEventListener("click", refreshCaptcha);
-refreshCaptcha();
-
-// ===== パスワード強度 =====
-pwInput.addEventListener("input", () => {
-  const len = pwInput.value.length;
-  if (len > 0 && Math.random() < 0.08) {
-    pwInput.value = pwInput.value.slice(0, -1);
-    showStatus("セキュリティのため1文字削除されました");
-  }
-  strengthFill.style.width = Math.min(len * 3, 28) + "%";
-  strengthLabel.textContent = STRENGTH_LABELS[Math.min(Math.floor(len / 3), STRENGTH_LABELS.length - 1)];
+dlBtn.addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'qrcode.png';
+  a.click();
 });
 
-// ===== 目ボタン =====
-document.getElementById("eyeBtn").addEventListener("click", () => {
-  pwInput.type = "text";
-  setTimeout(() => { pwInput.type = "password"; }, 280);
+copyBtn.addEventListener('click', async () => {
+  try {
+    canvas.toBlob(async blob => {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      const prev = copyBtn.textContent;
+      copyBtn.textContent = '✓ コピー完了';
+      setTimeout(() => { copyBtn.textContent = prev; }, 1500);
+    });
+  } catch {
+    showError('クリップボードへのコピーに失敗しました（HTTPSが必要です）');
+  }
 });
 
-// ===== 要件更新 =====
-function updateRequirements() {
-  const set = REQUIREMENTS[Math.floor(Math.random() * REQUIREMENTS.length)];
-  reqList.innerHTML = set.map(r => `<li>${r}</li>`).join("");
-}
-updateRequirements();
-
-// ===== モーダル =====
-function showError(title, msg) {
-  document.getElementById("errorTitle").textContent = title;
-  document.getElementById("errorMsg").textContent   = msg;
-  errorModal.classList.add("show");
-}
-function closeError() { errorModal.classList.remove("show"); }
-
-// ===== ニセ成功 =====
-function fakeSuccess() {
-  successModal.classList.add("show");
-  const fill  = document.getElementById("progressFill");
-  const sub   = document.getElementById("successSub");
-  const steps = ["認証中...","サーバー接続中...","権限を確認中...","ほぼ完了...","実は最初からやり直し"];
-  let w = 0;
-  const timer = setInterval(() => {
-    w++;
-    fill.style.width = w + "%";
-    if (w % 20 === 0) sub.textContent = steps[Math.floor(w / 20)];
-    if (w >= 100) {
-      clearInterval(timer);
-      setTimeout(() => {
-        successModal.classList.remove("show");
-        fill.style.width = "0%";
-        sub.textContent  = "";
-        pwInput.value    = "";
-        refreshCaptcha();
-        updateRequirements();
-        showStatus("リセットされました。最初からどうぞ 😊");
-      }, 800);
-    }
-  }, 22);
-}
-
-// ===== カード揺らす =====
-function shakeCard() {
-  const card = document.getElementById("card");
-  let n = 14;
-  const iv = setInterval(() => {
-    const dx = (Math.random() - 0.5) * 22;
-    const dy = (Math.random() - 0.5) * 18;
-    card.style.transform = `translate(${dx}px,${dy}px) rotate(${(Math.random()-0.5)*1.5}deg)`;
-    if (--n <= 0) { clearInterval(iv); card.style.transform = ""; }
-  }, 30);
-}
-
-// ===== ステータス =====
-let statusTimer = null;
-function showStatus(msg) {
-  statusMsg.textContent = msg;
-  clearTimeout(statusTimer);
-  statusTimer = setTimeout(() => { statusMsg.textContent = ""; }, 2200);
-}
-
-// ===== 定期うざい演出 =====
-setInterval(() => { document.title = TITLES[Math.floor(Math.random() * TITLES.length)]; }, 2000);
-
-setInterval(() => {
-  if (Math.random() < 0.2 && pwInput.value.length > 3) {
-    pwInput.value = "";
-    showStatus("セキュリティタイムアウト: 再入力してください");
-  }
-}, 5000);
-
-setInterval(() => {
-  if (Math.random() < 0.25) {
-    const { maxX, maxY } = getBtnBounds();
-    setBtnPos(Math.random() * maxX, Math.random() * maxY);
-  }
-}, 2800);
-
-setInterval(() => {
-  document.getElementById("marqueeText").innerHTML =
-    MARQUEE_MSGS[Math.floor(Math.random() * MARQUEE_MSGS.length)];
-}, 7000);
-
-setInterval(() => {
-  pwInput.placeholder = PW_PLACEHOLDERS[Math.floor(Math.random() * PW_PLACEHOLDERS.length)];
-}, 3500);
-
-// ===== ラベルスクランブル =====
-const LABELS = [
-  { el: document.getElementById("lbl2"), orig: "パスワード:" },
-  { el: document.getElementById("lbl4"), orig: "上の文字を正確に入力:" },
-];
-function scrambleLabel(el, orig) {
-  let elapsed = 0;
-  const iv = setInterval(() => {
-    elapsed += 40;
-    if (elapsed >= 600) { el.innerText = orig; clearInterval(iv); return; }
-    el.innerText = [...orig].map(c =>
-      c === " " ? " " : Math.random() < 0.4
-        ? SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)] : c
-    ).join("");
-  }, 40);
-}
-setInterval(() => {
-  const lbl = LABELS[Math.floor(Math.random() * LABELS.length)];
-  scrambleLabel(lbl.el, lbl.orig);
-}, 3000);
-
-// ===== 浮遊テキスト =====
-function spawnFloater() {
-  const div = document.createElement("div");
-  div.className   = "floater";
-  div.textContent = FLOAT_WORDS[Math.floor(Math.random() * FLOAT_WORDS.length)];
-  div.style.left  = Math.random() * 100 + "vw";
-  const dur = 8 + Math.random() * 8;
-  div.style.animationDuration = dur + "s";
-  div.style.fontSize = clamp(8, 9 + Math.random() * 8, 16) + "px";
-  div.style.color = `rgba(${ri(40,90)},${ri(20,55)},${ri(60,130)},0.11)`;
-  document.getElementById("floaters").appendChild(div);
-  setTimeout(() => div.remove(), dur * 1000 + 500);
-}
-function ri(a, b) { return Math.floor(Math.random() * (b - a) + a); }
-function clamp(min, v, max) { return Math.min(max, Math.max(min, v)); }
-setInterval(spawnFloater, 900);
-spawnFloater(); spawnFloater(); spawnFloater();
+// Auto-generate on load with placeholder
+textInput.value = 'https://github.com';
+generate();
 </script>
 </body>
 </html>
