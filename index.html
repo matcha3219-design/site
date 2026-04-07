@@ -273,29 +273,32 @@
     const data = img.data;
     const cw = canvas.width;
 
-    // モジュール数を推定（連続する同色ピクセル幅から）
-    // 左上から右に走査して最初の色変化を探す
-    let moduleSize = 1;
-    const firstPixel = data[0] < 128; // true=dark
-    for (let x = 1; x < cw; x++) {
-      const isDark = data[x * 4] < 128;
-      if (isDark !== firstPixel) { moduleSize = x; break; }
+    // モジュールサイズを検出:
+    // QRコードは必ず左上が暗モジュール(finder pattern)から始まる。
+    // y=0行を左から走査し、最初の「暗→明」切り替わりまでのピクセル数がmoduleSize。
+    let modPxDetected = 0;
+    for (let x = 0; x < cw; x++) {
+      const r = data[(0 * cw + x) * 4];
+      if (r > 128) { modPxDetected = x; break; }
     }
-    if (moduleSize < 1) moduleSize = Math.round(cw / size);
+    // 見つからなければcanvas幅から推定（バージョン1=21モジュール）
+    if (modPxDetected < 1) modPxDetected = Math.round(cw / 21);
 
-    const count = Math.round(cw / moduleSize);
+    const count = Math.round(cw / modPxDetected);
+    const modPx = cw / count; // 正確なモジュールサイズ（小数可）
     const modules = [];
 
     for (let row = 0; row < count; row++) {
       for (let col = 0; col < count; col++) {
-        const px = Math.floor(col * moduleSize + moduleSize / 2);
-        const py = Math.floor(row * moduleSize + moduleSize / 2);
+        const px = Math.floor(col * modPx + modPx / 2);
+        const py = Math.floor(row * modPx + modPx / 2);
         const idx = (py * cw + px) * 4;
         const isDark = data[idx] < 128;
         if (isDark) modules.push({ row, col });
       }
     }
-    return { modules, count, moduleSize: Math.floor(size / count) };
+    const renderModPx = Math.floor(size / count);
+    return { modules, count, moduleSize: renderModPx };
   }
 
   function runScrambleAnimation(modules, count, modPx, totalSize) {
