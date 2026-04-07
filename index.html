@@ -266,39 +266,18 @@
   function showError(msg) { errorBox.textContent = msg; errorBox.classList.add('show'); }
   function clearError()   { errorBox.classList.remove('show'); }
 
-  // qrcodejsのcanvasからモジュール情報を抽出
-  function extractModules(canvas, size) {
-    const ctx = canvas.getContext('2d');
-    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = img.data;
-    const cw = canvas.width;
-
-    // モジュールサイズを検出:
-    // QRコードは必ず左上が暗モジュール(finder pattern)から始まる。
-    // y=0行を左から走査し、最初の「暗→明」切り替わりまでのピクセル数がmoduleSize。
-    let modPxDetected = 0;
-    for (let x = 0; x < cw; x++) {
-      const r = data[(0 * cw + x) * 4];
-      if (r > 128) { modPxDetected = x; break; }
-    }
-    // 見つからなければcanvas幅から推定（バージョン1=21モジュール）
-    if (modPxDetected < 1) modPxDetected = Math.round(cw / 21);
-
-    const count = Math.round(cw / modPxDetected);
-    const modPx = cw / count; // 正確なモジュールサイズ（小数可）
+  // qrcodejsの内部データからモジュール情報を直接取得
+  function extractModules(qrObj, size) {
+    const moduleData = qrObj._oQRCode.modules;
+    const count = moduleData.length;
     const modules = [];
-
     for (let row = 0; row < count; row++) {
       for (let col = 0; col < count; col++) {
-        const px = Math.floor(col * modPx + modPx / 2);
-        const py = Math.floor(row * modPx + modPx / 2);
-        const idx = (py * cw + px) * 4;
-        const isDark = data[idx] < 128;
-        if (isDark) modules.push({ row, col });
+        if (moduleData[row][col]) modules.push({ row, col });
       }
     }
-    const renderModPx = Math.floor(size / count);
-    return { modules, count, moduleSize: renderModPx };
+    const modPx = Math.floor(size / count);
+    return { modules, count, moduleSize: modPx };
   }
 
   function runScrambleAnimation(modules, count, modPx, totalSize) {
@@ -371,20 +350,23 @@
     snapshotCanvas = null;
     qrHidden.innerHTML = '';
 
-    // 隠しcanvasでQR生成（ピクセル読み取り用）
+    // 隠しコンテナでQR生成（内部データ読み取り用）
+    let qrObj;
     try {
-      new QRCode(qrHidden, { text, width: size, height: size, correctLevel: ec });
+      qrObj = new QRCode(qrHidden, { text, width: size, height: size, correctLevel: ec });
     } catch (e) {
       showError('QRコードの生成に失敗しました: ' + e.message);
       return;
     }
 
-    // canvasが生成されるまで少し待つ
+    // _oQRCodeが設定されるまで少し待つ
     setTimeout(() => {
-      const canvas = qrHidden.querySelector('canvas');
-      if (!canvas) { showError('QRの読み取りに失敗しました'); return; }
+      if (!qrObj._oQRCode || !qrObj._oQRCode.modules) {
+        showError('QRデータの読み取りに失敗しました');
+        return;
+      }
 
-      const { modules, count, moduleSize: modPx } = extractModules(canvas, size);
+      const { modules, count, moduleSize: modPx } = extractModules(qrObj, size);
       const totalSize = count * modPx;
 
       meta.textContent = `EC: ${ecSelect.value}  ·  ${count}×${count} モジュール`;
