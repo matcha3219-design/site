@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QR Code Generator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -136,11 +137,10 @@
     overflow: hidden;
     box-shadow: 0 0 0 1px var(--border);
     line-height: 0;
-    transition: opacity 0.2s;
+    padding: 16px;
   }
-  #canvas-wrap.hidden { opacity: 0; }
 
-  canvas { display: block; max-width: min(300px, 80vw); height: auto; }
+  #qr-render { display: block; }
 
   .meta {
     font-size: 0.8rem;
@@ -201,12 +201,12 @@
       </select>
     </div>
     <div class="option-group">
-      <label for="size-select">モジュールサイズ</label>
+      <label for="size-select">サイズ</label>
       <select id="size-select">
-        <option value="6">小 (6px)</option>
-        <option value="8">中 (8px)</option>
-        <option value="10" selected>標準 (10px)</option>
-        <option value="14">大 (14px)</option>
+        <option value="128">小 (128px)</option>
+        <option value="200">中 (200px)</option>
+        <option value="256" selected>標準 (256px)</option>
+        <option value="320">大 (320px)</option>
       </select>
     </div>
   </div>
@@ -218,7 +218,7 @@
 
 <div class="output" id="output" style="display:none">
   <div id="canvas-wrap">
-    <canvas id="qr-canvas"></canvas>
+    <div id="qr-render"></div>
   </div>
   <div class="meta" id="meta"></div>
   <div class="actions">
@@ -227,76 +227,91 @@
   </div>
 </div>
 
-<script type="module">
-import { renderToCanvas } from './qr.js';
+<script>
+  const textInput = document.getElementById('text-input');
+  const ecSelect  = document.getElementById('ec-select');
+  const sizeSelect= document.getElementById('size-select');
+  const genBtn    = document.getElementById('gen-btn');
+  const output    = document.getElementById('output');
+  const qrRender  = document.getElementById('qr-render');
+  const meta      = document.getElementById('meta');
+  const dlBtn     = document.getElementById('dl-btn');
+  const copyBtn   = document.getElementById('copy-btn');
+  const errorBox  = document.getElementById('error');
 
-const textInput = document.getElementById('text-input');
-const ecSelect  = document.getElementById('ec-select');
-const sizeSelect= document.getElementById('size-select');
-const genBtn    = document.getElementById('gen-btn');
-const output    = document.getElementById('output');
-const canvasWrap= document.getElementById('canvas-wrap');
-const canvas    = document.getElementById('qr-canvas');
-const meta      = document.getElementById('meta');
-const dlBtn     = document.getElementById('dl-btn');
-const copyBtn   = document.getElementById('copy-btn');
-const errorBox  = document.getElementById('error');
+  let qrInstance = null;
 
-function showError(msg) {
-  errorBox.textContent = msg;
-  errorBox.classList.add('show');
-}
-function clearError() {
-  errorBox.classList.remove('show');
-}
+  const EC_MAP = { L: QRCode.CorrectLevel.L, M: QRCode.CorrectLevel.M, Q: QRCode.CorrectLevel.Q, H: QRCode.CorrectLevel.H };
 
-function generate() {
-  clearError();
-  const text = textInput.value.trim();
-  if (!text) { showError('テキストを入力してください'); return; }
-
-  try {
-    const qr = renderToCanvas(canvas, text, {
-      ecLevel: ecSelect.value,
-      moduleSize: parseInt(sizeSelect.value, 10),
-      margin: 4,
-    });
-    meta.textContent = `バージョン ${qr.version}  ·  ${qr.size}×${qr.size} モジュール  ·  EC: ${ecSelect.value}`;
-    output.style.display = 'flex';
-    canvasWrap.classList.remove('hidden');
-  } catch (e) {
-    showError(e.message);
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
   }
-}
-
-genBtn.addEventListener('click', generate);
-textInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(); }
-});
-
-dlBtn.addEventListener('click', () => {
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'qrcode.png';
-  a.click();
-});
-
-copyBtn.addEventListener('click', async () => {
-  try {
-    canvas.toBlob(async blob => {
-      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-      const prev = copyBtn.textContent;
-      copyBtn.textContent = '✓ コピー完了';
-      setTimeout(() => { copyBtn.textContent = prev; }, 1500);
-    });
-  } catch {
-    showError('クリップボードへのコピーに失敗しました（HTTPSが必要です）');
+  function clearError() {
+    errorBox.classList.remove('show');
   }
-});
 
-// Auto-generate on load with placeholder
-textInput.value = 'https://github.com';
-generate();
+  function getCanvas() {
+    return qrRender.querySelector('canvas');
+  }
+
+  function generate() {
+    clearError();
+    const text = textInput.value.trim();
+    if (!text) { showError('テキストを入力してください'); return; }
+
+    const size = parseInt(sizeSelect.value, 10);
+    const ec   = EC_MAP[ecSelect.value];
+
+    // 再生成のため中身をクリア
+    qrRender.innerHTML = '';
+
+    try {
+      qrInstance = new QRCode(qrRender, {
+        text,
+        width: size,
+        height: size,
+        correctLevel: ec,
+      });
+      meta.textContent = `EC: ${ecSelect.value}  ·  ${size}×${size}px`;
+      output.style.display = 'flex';
+    } catch (e) {
+      showError('QRコードの生成に失敗しました: ' + e.message);
+    }
+  }
+
+  genBtn.addEventListener('click', generate);
+  textInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generate(); }
+  });
+
+  dlBtn.addEventListener('click', () => {
+    const canvas = getCanvas();
+    if (!canvas) return;
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'qrcode.png';
+    a.click();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const canvas = getCanvas();
+    if (!canvas) return;
+    try {
+      canvas.toBlob(async blob => {
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = '✓ コピー完了';
+        setTimeout(() => { copyBtn.textContent = prev; }, 1500);
+      });
+    } catch {
+      showError('クリップボードへのコピーに失敗しました（HTTPSが必要です）');
+    }
+  });
+
+  // 初期生成
+  textInput.value = 'https://github.com';
+  generate();
 </script>
 </body>
 </html>
